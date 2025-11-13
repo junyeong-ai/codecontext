@@ -1,0 +1,24 @@
+project:
+  name: ecommerce_samples
+  type: simple
+  include:
+  - docs/**
+  exclude:
+  - '**/build/**'
+  - '**/dist/**'
+  - '**/node_modules/**'
+  - '**/__pycache__/**'
+  - '**/.gradle/**'
+  - '**/target/**'
+  - '**/.git/**'
+  - '**/.idea/**'
+  - '**/.vscode/**'
+  - '**/test/**'
+  - '**/e2eTest/**'
+  - '**/integrationTest/**'
+  - '**/testFixtures/**'
+storage:
+  mode: local
+  local:
+    path: .codecontext/chroma
+    port: 8000
