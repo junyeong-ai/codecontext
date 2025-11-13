@@ -1,0 +1,672 @@
+version: '2.0'
+created: '2025-11-12'
+description: |
+  Utility-Based Ground Truth for E-commerce Sample - Version 2
+
+  Design Philosophy:
+  Based on complete qualitative analysis of all source code and documentation,
+  this ground truth reflects what AI agents ACTUALLY need when working with code.
+
+  Core Principles:
+  1. Symbol-level precision (exact methods/classes, not just files)
+  2. Actionability first (prioritize immediately executable code)
+  3. Multiple valid answers (recognize alternatives)
+  4. Essential coverage (implementation + domain + context)
+
+  Evaluation Dimensions:
+  - Essential Coverage: Does top-5 include all three categories?
+  - Actionability: Average utility score (methods=10, classes=9, docs=6)
+  - Precision: Found exact symbols mentioned?
+
+evaluation_criteria:
+  essential_coverage:
+    description: "Top-5 must include implementation, domain model OR documentation, and context"
+    categories:
+      - implementation  # Methods/functions that can be directly modified
+      - domain_or_doc  # Domain models (classes/enums) OR documentation
+      - context         # Related code or documentation for understanding
+    pass_threshold: 3  # All 3 categories
+    borderline: 2      # 2 categories
+
+  actionability:
+    description: "Average actionability score of top-5 results"
+    weights:
+      method: 10           # Immediately modifiable
+      class: 9             # Domain model or service class
+      component: 8         # Frontend component
+      document_section: 6  # Documentation
+      interface: 5         # Protocol/interface
+    excellent_threshold: 8.0
+    good_threshold: 6.0
+    acceptable_threshold: 5.0
+
+  precision:
+    description: "Percentage of essential symbols found in top-5"
+    excellent_threshold: 0.8  # 80%
+    good_threshold: 0.6       # 60%
+    acceptable_threshold: 0.4 # 40%
+
+ground_truth:
+  # ============================================================================
+  # Q001: Order Processing Flow
+  # ============================================================================
+  - query_id: Q001
+    query: "order processing flow"
+    category: workflow
+    difficulty: medium
+    user_intent: "Understand complete order lifecycle from creation to delivery"
+
+    essentials:
+      implementation:
+        - symbol: "OrderService::processOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+          type: method
+          priority: H1
+          reason: "Main orchestration - validates inventory, processes payment, creates order"
+          lines: "75-150"
+
+        - symbol: "OrderController::createOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+          type: method
+          priority: H1
+          reason: "API entry point - POST /api/v1/orders endpoint"
+          lines: "35-47"
+
+      domain_model:
+        - symbol: "Order"
+          path: "services/order-service/src/main/java/com/ecommerce/order/domain/Order.java"
+          type: class
+          priority: H2
+          reason: "Order domain entity with items, status, payment"
+          lines: "15-133"
+
+        - symbol: "OrderStatus"
+          path: "services/order-service/src/main/java/com/ecommerce/order/domain/OrderStatus.java"
+          type: enum
+          priority: H2
+          reason: "Order state machine (PENDING → CONFIRMED → SHIPPED → DELIVERED)"
+          lines: "9-54"
+
+      documentation:
+        - path: "docs/business/order-flow.md"
+          type: document
+          priority: H1
+          reason: "Complete order flow with state transitions and code examples"
+          sections: ["Order States", "Complete Flow", "Integration Points"]
+
+    scoring:
+      top5_must_include_at_least_one_from_each:
+        implementation: true      # OrderService.processOrder OR OrderController.createOrder
+        domain_or_doc: true       # Order OR OrderStatus OR order-flow.md
+        context: true             # Any related component
+
+  # ============================================================================
+  # Q002: Payment Gateway Integration
+  # ============================================================================
+  - query_id: Q002
+    query: "payment gateway integration"
+    category: integration
+    difficulty: medium
+    user_intent: "Understand payment gateway abstraction and implementations"
+
+    essentials:
+      implementation:
+        - symbol: "PaymentGateway"
+          path: "services/payment-service/src/payment_gateway.py"
+          type: protocol
+          priority: H1
+          reason: "Base abstraction defining charge(), refund(), verify_card()"
+          lines: "21-39"
+
+        - symbol: "StripePaymentGateway"
+          path: "services/payment-service/src/payment_gateway.py"
+          type: class
+          priority: H1
+          reason: "Stripe implementation with card processing"
+          lines: "41-139"
+
+        - symbol: "PayPalPaymentGateway"
+          path: "services/payment-service/src/payment_gateway.py"
+          type: class
+          priority: H1
+          reason: "PayPal implementation with digital wallet"
+          lines: "141-222"
+
+        - symbol: "PaymentService::processPayment"
+          path: "services/payment-service/src/payment_service.py"
+          type: method
+          priority: H1
+          reason: "Payment orchestrator selecting gateway and processing"
+          lines: "51-150"
+
+      domain_model:
+        - symbol: "Payment"
+          path: "services/payment-service/src/models/payment.py"
+          type: class
+          priority: H2
+          reason: "Payment domain model with status tracking"
+          lines: "33-102"
+
+        - symbol: "PaymentStatus"
+          path: "services/payment-service/src/models/payment.py"
+          type: enum
+          priority: H2
+          reason: "Payment states (PENDING, COMPLETED, DECLINED, REFUNDED)"
+          lines: "21-29"
+
+      documentation:
+        - path: "docs/business/payment-gateway.md"
+          type: document
+          priority: H1
+          reason: "Gateway architecture, abstraction patterns, integration details"
+
+    scoring:
+      top5_must_include_at_least_one_from_each:
+        implementation: true  # PaymentGateway OR Stripe/PayPal OR PaymentService
+        domain_or_doc: true   # Payment model OR payment-gateway.md
+        context: true
+
+  # ============================================================================
+  # Q003: Customer Tier Discount System
+  # ============================================================================
+  - query_id: Q003
+    query: "customer tier discount system"
+    category: business_logic
+    difficulty: easy
+    user_intent: "Modify tier discount rates or understand discount calculation"
+
+    essentials:
+      implementation:
+        - symbol: "Customer::getTierDiscount"
+          path: "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/Customer.kt"
+          type: method
+          priority: H1
+          reason: "Kotlin implementation returning discount rate by tier"
+          lines: "49-56"
+
+        - symbol: "OrderService::getTierDiscount"
+          path: "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+          type: method
+          priority: H1
+          reason: "Java implementation used in order price calculation"
+          lines: "181-190"
+
+        - symbol: "getTierDiscount"
+          path: "frontend/web/utils/formatPrice.js"
+          type: function
+          priority: H2
+          reason: "Frontend discount display (BRONZE:0%, SILVER:5%, GOLD:10%, PLATINUM:15%)"
+          lines: "77-86"
+
+      domain_model:
+        - symbol: "CustomerTier"
+          path: "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/CustomerTier.kt"
+          type: enum
+          priority: H1
+          reason: "Tier definitions with benefits (BRONZE/SILVER/GOLD/PLATINUM)"
+          lines: "20-97"
+
+      context:
+        - symbol: "CustomerService::calculateTier"
+          path: "services/customer-service/src/main/kotlin/com/ecommerce/customer/service/CustomerService.kt"
+          type: method
+          priority: H2
+          reason: "Tier calculation based on lifetime purchases"
+          lines: "48-57"
+
+      documentation:
+        - path: "docs/business/customer-tier.md"
+          type: document
+          priority: H2
+          reason: "Tier thresholds, benefits, business rules with code examples"
+
+    scoring:
+      top5_must_include:
+        - "At least ONE getTierDiscount implementation (H1)"
+        - "CustomerTier enum (H1)"
+      flexibility: "Multiple implementations acceptable (Kotlin, Java, JS)"
+
+  # ============================================================================
+  # Q004: Inventory Stock Management
+  # ============================================================================
+  - query_id: Q004
+    query: "inventory stock management"
+    category: service
+    difficulty: easy
+    user_intent: "Understand inventory operations and stock tracking"
+
+    essentials:
+      implementation:
+        - symbol: "InventoryService"
+          path: "services/inventory-service/src/inventory_service.py"
+          type: class
+          priority: H1
+          reason: "Main inventory service with all stock operations"
+          lines: "23-253"
+
+        - symbol: "InventoryService::checkStock"
+          path: "services/inventory-service/src/inventory_service.py"
+          type: method
+          priority: H1
+          reason: "Check product availability across warehouses"
+          lines: "48-79"
+
+        - symbol: "InventoryService::reserveStock"
+          path: "services/inventory-service/src/inventory_service.py"
+          type: method
+          priority: H1
+          reason: "Reserve stock for order with 30-min TTL"
+          lines: "81-123"
+
+        - symbol: "InventoryService::releaseReservation"
+          path: "services/inventory-service/src/inventory_service.py"
+          type: method
+          priority: H2
+          reason: "Release reservation on payment failure"
+          lines: "125-148"
+
+      domain_model:
+        - symbol: "Product"
+          path: "services/inventory-service/src/models/product.py"
+          type: class
+          priority: H2
+          reason: "Product model with SKU, price, dimensions"
+          lines: "31-72"
+
+      documentation:
+        - path: "docs/business/inventory-management.md"
+          type: document
+          priority: H1
+          reason: "Multi-warehouse system, reservation flow, auto-reordering"
+
+    scoring:
+      top5_must_include_at_least_one_from_each:
+        implementation: true  # InventoryService class OR methods
+        domain_or_doc: true   # Product model OR inventory-management.md
+        context: true
+
+  # ============================================================================
+  # Q005: Checkout Process with Payment
+  # ============================================================================
+  - query_id: Q005
+    query: "checkout process with payment"
+    category: workflow
+    difficulty: hard
+    user_intent: "End-to-end checkout implementation from cart to payment"
+
+    essentials:
+      implementation:
+        - symbol: "CheckoutFlow"
+          path: "frontend/web/components/checkout/CheckoutFlow.tsx"
+          type: component
+          priority: H1
+          reason: "Frontend 4-step checkout orchestration"
+          lines: "1-217"
+
+        - symbol: "OrderService::processOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+          type: method
+          priority: H1
+          reason: "Backend order + payment processing"
+          lines: "75-150"
+
+        - symbol: "PaymentService::processPayment"
+          path: "services/payment-service/src/payment_service.py"
+          type: method
+          priority: H1
+          reason: "Payment gateway coordination"
+          lines: "51-150"
+
+      context:
+        - symbol: "orderService::createOrder"
+          path: "frontend/web/services/orderService.ts"
+          type: method
+          priority: H2
+          reason: "TypeScript API client calling backend"
+          lines: "79-95"
+
+        - symbol: "calculateShippingCost"
+          path: "frontend/web/utils/calculateShipping.js"
+          type: function
+          priority: H2
+          reason: "Shipping calculation in checkout"
+          lines: "28-56"
+
+      documentation:
+        - path: "docs/business/order-flow.md"
+          type: document
+          priority: H2
+          reason: "Complete flow documentation"
+
+    scoring:
+      top5_must_include_at_least:
+        - "CheckoutFlow OR OrderService.processOrder (H1)"
+        - "PaymentService (H1)"
+        - "One additional context component"
+
+  # ============================================================================
+  # Q006: Order Status Tracking
+  # ============================================================================
+  - query_id: Q006
+    query: "order status tracking"
+    category: domain
+    difficulty: easy
+    user_intent: "Understand order status enum and tracking display"
+
+    essentials:
+      implementation:
+        - symbol: "OrderStatus"
+          path: "services/order-service/src/main/java/com/ecommerce/order/domain/OrderStatus.java"
+          type: enum
+          priority: H1
+          reason: "Status definitions (PENDING, CONFIRMED, SHIPPED, DELIVERED, etc.)"
+          lines: "9-54"
+
+        - symbol: "OrderList"
+          path: "frontend/web/components/order/OrderList.tsx"
+          type: component
+          priority: H1
+          reason: "Frontend status display component"
+          lines: "43-133"
+
+      domain_model:
+        - symbol: "Order"
+          path: "services/order-service/src/main/java/com/ecommerce/order/domain/Order.java"
+          type: class
+          priority: H2
+          reason: "Order entity with status property"
+          lines: "15-133"
+
+        - symbol: "Order::canBeCancelled"
+          path: "services/order-service/src/main/java/com/ecommerce/order/domain/Order.java"
+          type: method
+          priority: H2
+          reason: "Status validation logic"
+          lines: "51-54"
+
+      documentation:
+        - path: "docs/business/order-flow.md"
+          type: document
+          priority: H2
+          reason: "Status flow and transitions"
+
+    scoring:
+      top5_must_include:
+        - "OrderStatus enum (H1)"
+        - "One additional component (OrderList OR Order class)"
+
+  # ============================================================================
+  # Q007: Price Calculation with Tier Discount
+  # ============================================================================
+  - query_id: Q007
+    query: "price calculation with tier discount"
+    category: business_logic
+    difficulty: medium
+    user_intent: "Understand complete pricing logic with discounts"
+
+    essentials:
+      implementation:
+        - symbol: "formatPrice"
+          path: "frontend/web/utils/formatPrice.js"
+          type: function
+          priority: H1
+          reason: "Price formatting with discount display"
+          lines: "29-53"
+
+        - symbol: "Customer::getTierDiscount"
+          path: "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/Customer.kt"
+          type: method
+          priority: H1
+          reason: "Get discount rate by tier"
+          lines: "49-56"
+
+        - symbol: "OrderService::processOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+          type: method
+          priority: H2
+          reason: "Price calculation with tier discount application"
+          lines: "75-150"
+
+      domain_model:
+        - symbol: "CustomerTier"
+          path: "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/CustomerTier.kt"
+          type: enum
+          priority: H2
+          reason: "Discount rates by tier"
+          lines: "20-97"
+
+      documentation:
+        - path: "docs/business/pricing-policy.md"
+          type: document
+          priority: H1
+          reason: "Pricing formula, tier discounts, campaign rules"
+
+    scoring:
+      top5_must_include_at_least_one_from_each:
+        implementation: true  # formatPrice OR getTierDiscount OR processOrder
+        domain_or_doc: true   # CustomerTier OR pricing-policy.md
+        context: true
+
+  # ============================================================================
+  # Q008: Shipping Cost Calculation Logic
+  # ============================================================================
+  - query_id: Q008
+    query: "shipping cost calculation logic"
+    category: algorithm
+    difficulty: easy
+    user_intent: "Modify or understand shipping cost algorithm"
+
+    essentials:
+      implementation:
+        - symbol: "calculateShippingCost"
+          path: "frontend/web/utils/calculateShipping.js"
+          type: function
+          priority: H1
+          reason: "Main algorithm: distance + weight + tier-based free shipping"
+          lines: "28-56"
+
+        - symbol: "calculateDistance"
+          path: "frontend/web/utils/calculateShipping.js"
+          type: function
+          priority: H1
+          reason: "Haversine formula for great-circle distance"
+          lines: "67-82"
+
+        - symbol: "getFreeShippingThreshold"
+          path: "frontend/web/utils/calculateShipping.js"
+          type: function
+          priority: H1
+          reason: "Tier-based free shipping thresholds"
+          lines: "92-101"
+
+      context:
+        - symbol: "CheckoutFlow"
+          path: "frontend/web/components/checkout/CheckoutFlow.tsx"
+          type: component
+          priority: H2
+          reason: "Uses shipping calculation in checkout"
+
+        - symbol: "Customer::getFreeShippingThreshold"
+          path: "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/Customer.kt"
+          type: method
+          priority: H2
+          reason: "Backend tier threshold calculation"
+
+    scoring:
+      top5_must_include:
+        - "calculateShippingCost (H1)"
+        - "calculateDistance OR getFreeShippingThreshold"
+
+  # ============================================================================
+  # Q009: Complete Order Lifecycle from Cart to Delivery
+  # ============================================================================
+  - query_id: Q009
+    query: "complete order lifecycle from cart to delivery"
+    category: workflow
+    difficulty: hard
+    user_intent: "End-to-end understanding of entire order flow"
+
+    essentials:
+      implementation:
+        - symbol: "Cart"
+          path: "frontend/web/components/cart/Cart.tsx"
+          type: component
+          priority: H2
+          reason: "Starting point - cart management"
+          lines: "31-138"
+
+        - symbol: "CheckoutFlow"
+          path: "frontend/web/components/checkout/CheckoutFlow.tsx"
+          type: component
+          priority: H1
+          reason: "Checkout orchestration"
+          lines: "1-217"
+
+        - symbol: "OrderService::processOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+          type: method
+          priority: H1
+          reason: "Backend order processing"
+          lines: "75-150"
+
+        - symbol: "OrderController::createOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+          type: method
+          priority: H2
+          reason: "API endpoint bridging frontend and backend"
+          lines: "35-47"
+
+        - symbol: "OrderList"
+          path: "frontend/web/components/order/OrderList.tsx"
+          type: component
+          priority: H2
+          reason: "Order tracking after delivery"
+          lines: "43-133"
+
+      documentation:
+        - path: "docs/business/order-flow.md"
+          type: document
+          priority: H1
+          reason: "Complete lifecycle documentation with code examples"
+
+    scoring:
+      top5_must_include_at_least:
+        - "order-flow.md OR CheckoutFlow OR OrderService.processOrder"
+        - "At least 2 different flow components (Cart, Checkout, OrderList)"
+
+  # ============================================================================
+  # Q010: REST API Endpoints and Design
+  # ============================================================================
+  - query_id: Q010
+    query: "REST API endpoints and design"
+    category: architecture
+    difficulty: medium
+    user_intent: "Understand API architecture and implementation"
+
+    essentials:
+      implementation:
+        - symbol: "OrderController"
+          path: "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+          type: class
+          priority: H1
+          reason: "REST controller with all order endpoints"
+          lines: "20-99"
+
+        - symbol: "OrderController::createOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+          type: method
+          priority: H1
+          reason: "POST /api/v1/orders endpoint example"
+          lines: "35-47"
+
+        - symbol: "OrderController::getOrder"
+          path: "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+          type: method
+          priority: H2
+          reason: "GET /api/v1/orders/{id} endpoint example"
+          lines: "57-61"
+
+      context:
+        - path: "frontend/web/services/orderService.ts"
+          type: file
+          priority: H2
+          reason: "TypeScript API client implementation"
+
+      documentation:
+        - path: "docs/architecture/api-design.md"
+          type: document
+          priority: H1
+          reason: "REST principles, naming conventions, error handling, examples"
+
+        - path: "docs/architecture/system-architecture.md"
+          type: document
+          priority: H2
+          reason: "Overall API architecture and service communication"
+
+    scoring:
+      top5_must_include_at_least:
+        - "OrderController class OR api-design.md (H1)"
+        - "At least one method example OR orderService.ts"
+
+# ============================================================================
+# Scoring Notes
+# ============================================================================
+notes: |
+  This ground truth was designed through complete qualitative analysis of:
+
+  Source Code Analyzed:
+  - Java: OrderService.java, OrderController.java, Order.java, OrderStatus.java
+  - Kotlin: Customer.kt, CustomerTier.kt, CustomerService.kt
+  - Python: payment_service.py, payment_gateway.py, inventory_service.py
+  - TypeScript/JavaScript: CheckoutFlow.tsx, OrderList.tsx, Cart.tsx,
+    orderService.ts, formatPrice.js, calculateShipping.js
+
+  Documentation Analyzed:
+  - order-flow.md (complete order lifecycle)
+  - customer-tier.md (tier system with examples)
+  - payment-gateway.md (gateway architecture)
+  - api-design.md (REST principles and examples)
+  - system-architecture.md (overall system design)
+  - pricing-policy.md (pricing formula and discounts)
+  - inventory-management.md (warehouse system)
+
+  Design Rationale:
+
+  1. **Implementation-First Philosophy**
+     When an AI agent receives "change tier discount from 15% to 20%", it needs:
+     - FIRST: Exact method locations (Customer.getTierDiscount, etc.)
+     - SECOND: Data definition (CustomerTier enum)
+     - THIRD: Context if needed (documentation)
+
+  2. **Symbol-Level Precision**
+     Specifying "OrderService.processOrder" (lines 75-150) is more useful than
+     "OrderService.java" because agents need to know WHICH method to modify.
+
+  3. **Multiple Valid Answers**
+     For "tier discount", finding ANY of these is correct:
+     - Customer.getTierDiscount (Kotlin)
+     - OrderService.getTierDiscount (Java)
+     - getTierDiscount (JavaScript)
+     All three are valid entry points for modification.
+
+  4. **Actionability Scoring**
+     - Method (10): Can be modified immediately
+     - Class (9): Domain model or service
+     - Component (8): Frontend component
+     - Documentation (6): Context and understanding
+     This reflects actual utility for AI agents.
+
+  5. **Essential Coverage**
+     Each query requires:
+     - Implementation (to modify)
+     - Domain/Doc (to understand structure/context)
+     - Context (to see usage or integration)
+
+     This ensures agents get complete information.
+
+  Pass Criteria (Per Query):
+  - Essential Coverage: 3/3 categories ✓
+  - Actionability: Average ≥ 6.0 (good) or ≥ 8.0 (excellent)
+  - Precision: ≥60% of specified symbols found
+
+  Expected Pass Rate with Current System: 7-8/10 (70-80%)

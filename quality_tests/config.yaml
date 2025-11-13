@@ -1,0 +1,87 @@
+# Translation Provider Configuration (v0.5.0+)
+translation:
+  enabled: true
+  provider: nllb
+  nllb:
+    model_name: "facebook/nllb-200-distilled-600M"
+    cache_dir: "/tmp/codecontext_test_cache"
+    device: cpu
+    device_threads: 8
+    device_memory_fraction: 0.8
+    batch_size: 16
+    use_fp16: false
+    cleanup_interval: 5
+    max_length: 512
+
+embeddings:
+  provider: huggingface
+  huggingface:
+    model_name: "jinaai/jina-code-embeddings-0.5b"
+    cache_dir: "/tmp/codecontext_test_cache"
+    device: cpu
+    device_threads: 8
+    device_memory_fraction: 0.8
+    batch_size: 32
+    use_fp16: false
+    normalize_embeddings: true
+    max_length: 32768
+    cleanup_interval: 5
+    use_jemalloc: true
+
+storage:
+  provider: chromadb
+  chromadb:
+    host: localhost
+    port: 8000
+  environment: test  # Use test environment for quality tests
+
+indexing:
+  file_chunk_size: 30
+  batch_size: 256
+  languages:
+    - python
+    - kotlin
+    - java
+    - javascript
+    - typescript
+    - markdown
+    - json
+    - yaml
+    - properties
+  max_file_size_mb: 10
+  parallel_workers: 10
+  memory_management:
+    force_gc_after_chunk: true
+    clear_gpu_cache: true
+    gpu_sync_before_clear: true
+
+  parsing:
+    timeout_micros: 5000000
+    enable_error_recovery: true
+    partial_parse_threshold: 0.5
+    enable_chunking: true
+    chunking_threshold_lines: 1000
+    chunking_threshold_bytes: 50000
+
+search:
+  default_limit: 20  # More results for testing
+  bm25_weight: 0.4
+  mmr_lambda: 0.75
+
+  # Graph expansion
+  enable_graph_expansion: true
+  graph_max_hops: 1
+  graph_ppr_threshold: 0.4
+  graph_score_weight: 0.3
+
+  # Retrieval optimization
+  bm25_retrieval_multiplier: 5
+  vector_retrieval_multiplier: 5
+
+  # File diversity
+  max_chunks_per_file: 3  # More context for quality tests
+  diversity_preserve_top_n: 1
+
+logging:
+  level: INFO
+  format: text
