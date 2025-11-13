@@ -1,0 +1,30 @@
+project:
+  name: codecontext
+  type: multi-module
+  include:
+  - docs/**
+  - packages/codecontext-cli/src/**
+  - packages/codecontext-core/src/**
+  - packages/codecontext-embeddings-huggingface/src/**
+  - packages/codecontext-embeddings-openai/src/**
+  - packages/codecontext-storage-chromadb/src/**
+  - packages/codecontext-translation-nllb/src/**
+  exclude:
+  - '**/build/**'
+  - '**/dist/**'
+  - '**/node_modules/**'
+  - '**/__pycache__/**'
+  - '**/.gradle/**'
+  - '**/target/**'
+  - '**/.git/**'
+  - '**/.idea/**'
+  - '**/.vscode/**'
+  - '**/test/**'
+  - '**/e2eTest/**'
+  - '**/integrationTest/**'
+  - '**/testFixtures/**'
+storage:
+  mode: local
+  local:
+    path: .codecontext/chroma
+    port: 8000
