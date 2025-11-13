@@ -1,0 +1,75 @@
+# Query Expansion Configuration
+# Code-specific term expansion for improved search recall
+
+# Common abbreviations in code
+abbreviations:
+  # Configuration
+  cfg: config
+  conf: config
+
+  # Context and implementation
+  ctx: context
+  impl: implementation
+
+  # Services
+  svc: service
+  srv: service
+
+  # Repository
+  repo: repository
+
+  # Authentication
+  auth: authentication
+  authn: authentication
+  authz: authorization
+
+  # Request/Response
+  req: request
+  res: response
+  resp: response
+
+  # Message and error
+  msg: message
+  err: error
+
+  # Utilities
+  util: utility
+  utils: utilities
+
+  # Data and parameters
+  param: parameter
+  params: parameters
+  arg: argument
+  args: arguments
+
+  # Common tech terms
+  db: database
+  conn: connection
+  obj: object
+  fn: function
+  idx: index
+
+# Programming term synonyms
+synonyms:
+  function: [method, func, procedure]
+  class: [type, object, struct]
+  initialize: [init, setup, construct]
+  create: [make, build, new, instantiate]
+  delete: [remove, destroy, drop]
+  update: [modify, change, edit, set]
+  get: [fetch, retrieve, find, query]
+  send: [emit, publish, dispatch]
+  receive: [get, accept, consume]
+  validate: [check, verify, assert, authenticate]
+  credentials: [username, password, auth, login]
+  process: [handle, execute, run]
+  parse: [analyze, decode, interpret]
+
+# Case variant expansion
+case_variants:
+  enabled: true
+  # Automatically generate: CamelCase ↔ snake_case ↔ kebab-case
+
+# Expansion settings
+expansion_limit: 5  # Maximum number of expanded terms (prevent noise)
+min_term_length: 3  # Minimum term length to expand (avoid "a", "i")
