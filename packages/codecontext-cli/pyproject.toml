@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=80.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codecontext-cli"
+version = "0.5.0"
+description = "CodeContext CLI - Intelligent Code Search Engine"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = {text = "MIT"}
+authors = [{name = "CodeContext Team", email = "team@codecontext.dev"}]
+
+dependencies = [
+    "codecontext-core",
+    "codecontext-translation-nllb",
+    "typer>=0.20.0,<1.0.0",
+    "tree-sitter>=0.25.2,<1.0.0",
+    "tree-sitter-language-pack>=0.10.0,<1.0.0",
+    "gitpython>=3.1.45,<4.0.0",
+    "rich>=14.2.0,<15.0.0",
+    "pyyaml>=6.0.3,<7.0.0",
+    "langchain-text-splitters>=1.0.0,<2.0.0",
+    "pathspec>=0.12.1,<1.0.0",
+    "bm25s>=0.2.14,<1.0.0",
+    "langdetect>=1.0.9",
+]
+
+[project.scripts]
+codecontext = "codecontext.cli:app"
+
+[project.entry-points."codecontext.embeddings"]
+# Entry points registered by embedding packages
+
+[project.entry-points."codecontext.storage"]
+# Entry points registered by storage packages
+
+[tool.uv.sources]
+codecontext-core = { workspace = true }
+codecontext-translation-nllb = { workspace = true }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["codecontext*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py313']
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
