@@ -1,0 +1,721 @@
+"""Memory-bounded chunked indexing strategy.
+
+All indexing operations use chunked processing with explicit memory management
+to ensure O(1) memory usage regardless of repository size.
+"""
+
+import asyncio
+from collections.abc import AsyncGenerator
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from codecontext.config.schema import CodeContextConfig
+from codecontext_core.models import CodeObject, DocumentNode, Relationship
+from codecontext_core.interfaces import EmbeddingProvider, TranslationProvider
+
+if TYPE_CHECKING:
+    from codecontext.indexer.extractor import ImportInfo
+from codecontext.indexer.chunking import (
+    ChunkStats,
+    MemoryManager,
+    ProcessingStats,
+    chunk_files as iter_chunks,
+)
+import logging
+
+from codecontext.parsers.languages.config import ConfigFileParser
+from codecontext.parsers.languages.markdown import MarkdownParser
+from codecontext_core import VectorStore
+
+logger = logging.getLogger(__name__)
+
+
+class AsyncIndexStrategy:
+    """Memory-bounded chunked indexing strategy.
+
+    Processes files in chunks to maintain constant memory usage.
+    Supports any embedding provider (HuggingFace, OpenAI, etc.).
+    """
+
+    def __init__(
+        self,
+        config: CodeContextConfig,
+        embedding_provider: EmbeddingProvider,
+        storage: VectorStore,
+        translation_provider: TranslationProvider | None = None,
+    ) -> None:
+        """Initialize strategy.
+
+        Args:
+            config: Configuration
+            embedding_provider: Any embedding provider
+            storage: Vector storage
+            translation_provider: Optional translation provider
+        """
+        self.config = config
+        self.embedding_provider = embedding_provider
+        self.storage = storage
+        self.translation_provider = translation_provider
+        # Initialize document parsers with proper defaults
+        self.markdown_parser = MarkdownParser(chunk_size=512, chunk_overlap=50)
+        self.config_parser = ConfigFileParser()
+
+        # Initialize language detector if translation is enabled
+        if self.translation_provider:
+            from codecontext.utils.language import LanguageDetector
+
+            self.language_detector = LanguageDetector()
+        else:
+            self.language_detector = None
+
+        # Initialize parser factory and extractor
+        from codecontext.indexer.extractor import Extractor
+        from codecontext.parsers.factory import ParserFactory
+
+        self.parser_factory = ParserFactory.from_parsing_config(config.indexing.parsing)
+        self.extractor = Extractor(self.parser_factory)
+
+        # Memory manager
+        self.memory_manager = MemoryManager(config)
+
+    # ═══════════════════════════════════════════════════════════
+    # PUBLIC API: Chunked Processing
+    # ═══════════════════════════════════════════════════════════
+
+    async def process_code_files(
+        self,
+        file_paths: list[Path],
+        show_progress: bool = True,
+        reuse_embeddings: bool = False,
+    ) -> ProcessingStats:
+        if not file_paths:
+            return ProcessingStats()
+
+        chunk_size = self.config.indexing.file_chunk_size
+        stats = ProcessingStats()
+
+        logger.info(
+            f"Processing {len(file_paths)} files "
+            f"(chunk_size={chunk_size}, reuse={reuse_embeddings})"
+        )
+
+        async for chunk_index, chunk_files in iter_chunks(file_paths, chunk_size):
+            await self.embedding_provider.cleanup()
+
+            chunk_stats = await self._process_code_chunk(
+                chunk_files=chunk_files,
+                chunk_index=chunk_index,
+                show_progress=show_progress,
+                reuse_embeddings=reuse_embeddings,
+            )
+
+            stats.add_chunk(chunk_stats)
+            stats.total_chunks += 1
+            self.memory_manager.create_memory_barrier()
+
+            logger.info(
+                f"Chunk {chunk_index + 1}: "
+                f"{chunk_stats.objects_count} objects "
+                f"(total: {stats.total_objects})"
+            )
+
+        logger.info(f"Processing complete: {stats.total_objects} objects")
+        return stats
+
+    async def process_documents(
+        self,
+        file_paths: list[Path],
+        show_progress: bool = True,
+    ) -> int:
+        """Process document files in memory-bounded chunks.
+
+        Args:
+            file_paths: Document files
+            show_progress: Show progress bars
+
+        Returns:
+            Total documents processed
+        """
+        logger.info("=" * 80)
+        logger.info("📄 DOCUMENT INDEXING START")
+        logger.info(f"   Total files: {len(file_paths)}")
+        logger.info("=" * 80)
+
+        if not file_paths:
+            logger.warning("⚠️  No document files to process")
+            return 0
+
+        chunk_size = self.config.indexing.file_chunk_size
+        total_documents = 0
+
+        logger.info(f"Processing {len(file_paths)} documents (chunk_size={chunk_size})")
+
+        logger.info("First 5 files:")
+        for i, f in enumerate(file_paths[:5], 1):
+            logger.info(f"  {i}. {f.name}")
+        if len(file_paths) > 5:
+            logger.info(f"  ... and {len(file_paths) - 5} more")
+
+        total_chunks = (len(file_paths) + chunk_size - 1) // chunk_size
+        current_chunk = 0
+
+        async for chunk_index, chunk_files in iter_chunks(file_paths, chunk_size):
+            current_chunk += 1
+
+            logger.info("-" * 80)
+            logger.info(f"📦 CHUNK {current_chunk}/{total_chunks}")
+            logger.info(f"   Files: {len(chunk_files)}")
+            logger.info("-" * 80)
+
+            chunk_docs = await self._process_document_chunk(
+                chunk_files=chunk_files,
+                chunk_index=chunk_index,
+                show_progress=show_progress,
+            )
+
+            total_documents += len(chunk_docs)
+            self.memory_manager.create_memory_barrier()
+
+            logger.info(f"✅ CHUNK {current_chunk} COMPLETE: {len(chunk_docs)} docs")
+            logger.info(f"   Progress: {total_documents}/{len(file_paths)} documents")
+
+        logger.info("=" * 80)
+        logger.info("✅ DOCUMENT INDEXING COMPLETE")
+        logger.info(f"   Total: {total_documents} documents indexed")
+        logger.info("=" * 80)
+
+        return total_documents
+
+    # ═══════════════════════════════════════════════════════════
+    # CHUNK PROCESSING
+    # ═══════════════════════════════════════════════════════════
+
+    async def _process_code_chunk(
+        self,
+        chunk_files: list[Path],
+        chunk_index: int,
+        show_progress: bool,
+        reuse_embeddings: bool,
+    ) -> ChunkStats:
+        """Process single code chunk.
+
+        Args:
+            chunk_files: Files in chunk
+            chunk_index: Chunk index
+            show_progress: Show progress
+            reuse_embeddings: Reuse embeddings
+
+        Returns:
+            Chunk statistics
+        """
+        # Extract
+        chunk_objects, chunk_relationships = await self._extract_files(chunk_files)
+
+        # Embeddings
+        if reuse_embeddings:
+            chunk_objects, gen, reused = await self._embed_incremental(chunk_objects, show_progress)
+        else:
+            chunk_objects = await self._embed(chunk_objects, show_progress)
+            gen, reused = len(chunk_objects), 0
+
+        await asyncio.gather(
+            self._store_objects(chunk_objects, show_progress),
+            self._store_relationships(chunk_relationships, show_progress),
+        )
+
+        stats = ChunkStats(
+            chunk_index=chunk_index,
+            files_processed=len(chunk_files),
+            objects_count=len(chunk_objects),
+            relationships_count=len(chunk_relationships),
+            embeddings_generated=gen,
+            embeddings_reused=reused,
+        )
+
+        del chunk_objects, chunk_relationships
+        return stats
+
+    async def _process_document_chunk(
+        self,
+        chunk_files: list[Path],
+        chunk_index: int,
+        show_progress: bool,
+    ) -> list[DocumentNode]:
+        """Process single document chunk.
+
+        Args:
+            chunk_files: Files in chunk
+            chunk_index: Chunk index
+            show_progress: Show progress
+
+        Returns:
+            Document nodes
+        """
+        chunk_documents: list[DocumentNode] = []
+
+        # Parse files
+        logger.info(f"Parsing {len(chunk_files)} files in chunk {chunk_index}")
+        for file_path in chunk_files:
+            try:
+                if file_path.suffix.lower() in [".md", ".markdown"]:
+                    logger.debug(f"Parsing markdown file: {file_path}")
+                    docs = self.markdown_parser.parse_file(file_path)
+                    chunk_documents.extend(docs)
+                    logger.debug(f"Parsed {len(docs)} chunks from {file_path}")
+                elif self.config_parser.is_supported(file_path):
+                    logger.debug(f"Parsing config file: {file_path}")
+                    docs = self.config_parser.parse_file(file_path)
+                    chunk_documents.extend(docs)
+                    logger.debug(f"Parsed {len(docs)} chunks from {file_path}")
+            except (ValueError, OSError, RuntimeError) as e:
+                logger.warning(f"Failed to process {file_path}: {e}")
+
+        logger.info(
+            f"Parsed {len(chunk_documents)} total document chunks from {len(chunk_files)} files"
+        )
+
+        # Translation (if enabled)
+        if chunk_documents and self.translation_provider and self.language_detector:
+            logger.info(f"Translating {len(chunk_documents)} document chunks")
+            chunk_documents = await self._translate_documents(chunk_documents, show_progress)
+            logger.info(f"Translation complete for {len(chunk_documents)} document chunks")
+
+        # Embeddings and storage
+        if chunk_documents:
+            logger.info(f"Generating embeddings for {len(chunk_documents)} document chunks")
+            chunk_documents = await self._embed_documents(chunk_documents, show_progress)
+            logger.info(f"Storing {len(chunk_documents)} document chunks")
+            await self._store_documents(chunk_documents, show_progress)
+            logger.info(f"Successfully stored {len(chunk_documents)} document chunks")
+        else:
+            logger.warning(
+                f"No documents parsed from chunk {chunk_index} - skipping embedding and storage"
+            )
+
+        return chunk_documents
+
+    # ═══════════════════════════════════════════════════════════
+    # EXTRACTION
+    # ═══════════════════════════════════════════════════════════
+
+    async def _extract_files(
+        self, file_paths: list[Path]
+    ) -> tuple[list[CodeObject], list[Relationship]]:
+        """Extract files sequentially with controlled concurrency."""
+        from codecontext.indexer.extractor import ExtractionResult
+
+        max_concurrent = self._get_concurrency()
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def extract_one(file_path: Path) -> ExtractionResult | None:
+            async with semaphore:
+                try:
+                    return await self.extractor.extract_from_file(str(file_path))
+                except Exception as e:
+                    logger.warning(f"Extraction failed for {file_path}: {e}")
+                    return None
+
+        all_objects = []
+        all_relationships = []
+        all_imports = []
+
+        tasks = [extract_one(fp) for fp in file_paths]
+        results = await asyncio.gather(*tasks)
+
+        for result in results:
+            if result:
+                all_objects.extend(result.objects)
+                all_relationships.extend(result.relationships)
+                all_imports.extend(result.imports)
+
+        logger.debug(f"Extracted {len(all_objects)} objects from {len(file_paths)} files")
+        self._set_parent_ids(all_objects)
+
+        # Resolve import relationships (cross-file)
+        import_relationships = self._resolve_import_relationships(all_imports, all_objects)
+        all_relationships.extend(import_relationships)
+
+        logger.debug(
+            f"Resolved {len(import_relationships)} IMPORTS relationships "
+            f"from {len(all_imports)} import statements"
+        )
+
+        return all_objects, all_relationships
+
+    def _set_parent_ids(self, objects: list[CodeObject]) -> None:
+        """Set parent_deterministic_id.
+
+        Args:
+            objects: Code objects
+        """
+        id_map = {obj.id: obj.deterministic_id for obj in objects}
+        for obj in objects:
+            if obj.parent_id and obj.parent_id in id_map:
+                obj.parent_deterministic_id = id_map[obj.parent_id]
+
+    def _resolve_import_relationships(
+        self,
+        imports: list["ImportInfo"],
+        objects: list[CodeObject],
+    ) -> list[Relationship]:
+        """Resolve import statements to IMPORTS relationships.
+
+        Matches imported names with actual code objects using fuzzy matching.
+
+        Args:
+            imports: List of ImportInfo instances
+            objects: List of all code objects in the batch
+
+        Returns:
+            List of IMPORTS relationships
+        """
+        from codecontext_core.models import Relationship, RelationType
+
+        if not imports or not objects:
+            return []
+
+        # Build object lookup maps for efficient matching
+        # Map: name -> list of objects with that name
+        name_map: dict[str, list[CodeObject]] = {}
+        for obj in objects:
+            if obj.name not in name_map:
+                name_map[obj.name] = []
+            name_map[obj.name].append(obj)
+
+        # Map: file_path -> list of objects in that file (for file-level imports)
+        file_map: dict[str, list[CodeObject]] = {}
+        for obj in objects:
+            if obj.relative_path not in file_map:
+                file_map[obj.relative_path] = []
+            file_map[obj.relative_path].append(obj)
+
+        relationships = []
+
+        for import_info in imports:
+            # Try to match imported name to objects
+            matched_objects = self._match_import_to_objects(
+                import_info.imported_name,
+                import_info.source_file,
+                name_map,
+                file_map,
+            )
+
+            # Find importing file/module (source of the import)
+            source_objects = file_map.get(import_info.source_file, [])
+            if not source_objects:
+                continue
+
+            # Use first object in source file as import source (typically module/class)
+            source_obj = source_objects[0]
+
+            # Create IMPORTS relationships
+            for target_obj in matched_objects:
+                relationships.append(
+                    Relationship(
+                        source_id=source_obj.deterministic_id,
+                        source_type=source_obj.object_type.value,
+                        target_id=target_obj.deterministic_id,
+                        target_type=target_obj.object_type.value,
+                        relation_type=RelationType.IMPORTS,
+                        confidence=0.8,  # Lower confidence for fuzzy matching
+                    )
+                )
+
+        return relationships
+
+    def _match_import_to_objects(
+        self,
+        imported_name: str,
+        source_file: str,
+        name_map: dict[str, list[CodeObject]],
+        file_map: dict[str, list[CodeObject]],
+    ) -> list[CodeObject]:
+        """Match imported name to code objects using multiple strategies.
+
+        Args:
+            imported_name: Imported module/class name (e.g., "OrderService", "os.path")
+            source_file: File containing the import
+            name_map: Map of name -> objects
+            file_map: Map of file_path -> objects
+
+        Returns:
+            List of matched objects
+        """
+        matched = []
+
+        if imported_name in name_map:
+            matched.extend(name_map[imported_name])
+
+        if "." in imported_name:
+            segments = imported_name.split(".")
+            last_segment = segments[-1]
+            if last_segment in name_map:
+                matched.extend(name_map[last_segment])
+
+        import_path = imported_name.replace(".", "/")
+        for file_path, objects in file_map.items():
+            if import_path in file_path or file_path.endswith(f"{import_path}.py"):
+                matched.extend(objects)
+
+        # Deduplicate
+        seen = set()
+        unique_matched = []
+        for obj in matched:
+            if obj.deterministic_id not in seen:
+                seen.add(obj.deterministic_id)
+                unique_matched.append(obj)
+
+        return unique_matched
+
+    def _get_concurrency(self) -> int:
+        """Get extraction concurrency.
+
+        Returns:
+            Concurrency level
+        """
+        import os
+
+        workers = self.config.indexing.parallel_workers
+        if workers > 0:
+            return workers
+
+        cpu_count = os.cpu_count() or 4
+        return min(cpu_count // 2, 8)
+
+    # ═══════════════════════════════════════════════════════════
+    # EMBEDDINGS (Provider-agnostic)
+    # ═══════════════════════════════════════════════════════════
+
+    async def _embed(
+        self, objects: list[CodeObject], show_progress: bool = True
+    ) -> list[CodeObject]:
+        """Generate embeddings with streaming (O(batch_size) memory).
+
+        Args:
+            objects: Code objects
+            show_progress: Show progress
+
+        Returns:
+            Objects with embeddings
+        """
+        if not objects:
+            return []
+
+        from codecontext.utils.streaming_progress import SimpleProgress
+
+        batch_size = self.embedding_provider.get_batch_size()
+        progress = SimpleProgress(total=len(objects), desc="Embeddings") if show_progress else None
+
+        async def batch_generator() -> AsyncGenerator[list[str], None]:
+            for i in range(0, len(objects), batch_size):
+                batch = objects[i : i + batch_size]
+                yield [obj.content for obj in batch]
+
+        batch_index = 0
+        async for embeddings in self.embedding_provider.embed_stream(
+            batch_generator(), progress=progress
+        ):
+            start_idx = batch_index * batch_size
+            end_idx = min(start_idx + batch_size, len(objects))
+
+            for i, embedding in enumerate(embeddings):
+                if start_idx + i < end_idx:
+                    objects[start_idx + i].embedding = embedding
+
+            batch_index += 1
+
+        return objects
+
+    async def _embed_incremental(
+        self, objects: list[CodeObject], show_progress: bool = True
+    ) -> tuple[list[CodeObject], int, int]:
+        """Generate embeddings incrementally with reuse.
+
+        Args:
+            objects: Code objects
+            show_progress: Show progress
+
+        Returns:
+            (objects, generated_count, reused_count)
+        """
+        if not objects:
+            return [], 0, 0
+
+        # Fetch existing
+        ids = [obj.deterministic_id for obj in objects]
+        existing = self.storage.get_code_objects_batch(ids)
+        existing_map = {
+            obj.deterministic_id: obj.embedding for obj in existing if obj.embedding is not None
+        }
+
+        # Separate
+        to_generate = []
+        reused = 0
+
+        for obj in objects:
+            if obj.deterministic_id in existing_map:
+                obj.embedding = existing_map[obj.deterministic_id]
+                reused += 1
+            else:
+                to_generate.append(obj)
+
+        # Generate new
+        generated = 0
+        if to_generate:
+            await self._embed(to_generate, show_progress)
+            generated = len(to_generate)
+
+        logger.debug(f"Embeddings: {generated} generated, {reused} reused")
+        return objects, generated, reused
+
+    async def _embed_documents(
+        self, documents: list[DocumentNode], show_progress: bool = True
+    ) -> list[DocumentNode]:
+        """Generate document embeddings with streaming (O(batch_size) memory).
+
+        Args:
+            documents: Document nodes
+            show_progress: Show progress
+
+        Returns:
+            Documents with embeddings
+        """
+        if not documents:
+            return []
+
+        from codecontext.utils.streaming_progress import SimpleProgress
+
+        batch_size = self.embedding_provider.get_batch_size()
+        progress = SimpleProgress(total=len(documents), desc="Documents") if show_progress else None
+
+        async def batch_generator() -> AsyncGenerator[list[str], None]:
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i : i + batch_size]
+                yield [doc.content for doc in batch]
+
+        batch_index = 0
+        async for embeddings in self.embedding_provider.embed_stream(
+            batch_generator(), progress=progress
+        ):
+            start_idx = batch_index * batch_size
+            end_idx = min(start_idx + batch_size, len(documents))
+
+            for i, embedding in enumerate(embeddings):
+                if start_idx + i < end_idx:
+                    documents[start_idx + i].embedding = embedding
+
+            batch_index += 1
+
+        return documents
+
+    async def _translate_documents(
+        self, documents: list[DocumentNode], show_progress: bool = True
+    ) -> list[DocumentNode]:
+        """Translate documents to English if needed.
+
+        Args:
+            documents: Document nodes
+            show_progress: Show progress
+
+        Returns:
+            Documents with translated content
+        """
+        if not documents or not self.translation_provider or not self.language_detector:
+            return documents
+
+        from codecontext.utils.streaming_progress import SimpleProgress
+
+        translated_count = 0
+        progress = (
+            SimpleProgress(total=len(documents), desc="Translation") if show_progress else None
+        )
+
+        for doc in documents:
+            if not doc.content or not doc.content.strip():
+                continue
+
+            lang = self.language_detector.detect(doc.content)
+
+            if lang != "en":
+                try:
+                    translated_content = self.translation_provider.translate_text(
+                        doc.content, source_lang=lang, target_lang="en"
+                    )
+
+                    doc.metadata["original_text"] = doc.content
+                    doc.metadata["original_lang"] = lang
+                    doc.content = translated_content
+                    translated_count += 1
+
+                    logger.debug(f"Translated document from {lang} to en: {doc.id}")
+                except Exception as e:
+                    logger.warning(f"Translation failed for document {doc.id}: {e}")
+
+            if progress:
+                progress.update(1)
+
+        if progress:
+            progress.close()
+
+        logger.info(f"Translated {translated_count}/{len(documents)} documents to English")
+        return documents
+
+    # ═══════════════════════════════════════════════════════════
+    # STORAGE
+    # ═══════════════════════════════════════════════════════════
+
+    async def _store_objects(self, objects: list[CodeObject], show_progress: bool = True) -> None:
+        """Store code objects.
+
+        Args:
+            objects: Code objects
+            show_progress: Show progress
+        """
+        if not objects:
+            return
+
+        batch_size = self.config.indexing.batch_size
+
+        for i in range(0, len(objects), batch_size):
+            batch = objects[i : i + batch_size]
+            self.storage.add_code_objects(batch)
+
+    async def _store_documents(
+        self, documents: list[DocumentNode], show_progress: bool = True
+    ) -> None:
+        """Store documents.
+
+        Args:
+            documents: Document nodes
+            show_progress: Show progress
+        """
+        if not documents:
+            return
+
+        batch_size = self.config.indexing.batch_size
+
+        for i in range(0, len(documents), batch_size):
+            batch = documents[i : i + batch_size]
+            self.storage.add_documents(batch)
+
+    async def _store_relationships(
+        self, relationships: list[Relationship], show_progress: bool = True
+    ) -> None:
+        """Store relationships in batches to avoid ChromaDB timeouts.
+
+        ChromaDB HTTP client has default timeouts - large batches can fail.
+        Batching also improves memory efficiency.
+
+        Args:
+            relationships: Relationships
+            show_progress: Show progress
+        """
+        if not relationships:
+            return
+
+        # Use same batch size as code objects for consistency
+        batch_size = self.config.indexing.batch_size
+
+        for i in range(0, len(relationships), batch_size):
+            batch = relationships[i : i + batch_size]
+            await self.storage.add_relationships(batch)
