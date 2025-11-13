@@ -1,0 +1,156 @@
+# CodeContext Configuration
+# Copy to .codecontext.yaml and customize
+
+# Translation Provider Configuration (v0.5.0+)
+translation:
+  enabled: true  # Enable multilingual search (Korean → English)
+  provider: nllb  # nllb (v0.5.0: only supported provider)
+
+  nllb:
+    model_name: "facebook/nllb-200-distilled-600M"
+    cache_dir: null
+
+    device: cpu  # cpu | cuda | mps
+    device_threads: 0  # 0 = auto (all cores)
+    device_memory_fraction: 0.8
+
+    batch_size: 16  # CPU: 8-16, MPS: 32-64, CUDA: 64-128
+    use_fp16: false  # GPU/MPS only
+    cleanup_interval: 5  # Batches between memory cleanup
+    max_length: 512  # Maximum token length for translation
+
+embeddings:
+  provider: huggingface  # huggingface | openai
+
+  huggingface:
+    model_name: "jinaai/jina-code-embeddings-0.5b"
+    cache_dir: null
+
+    device: auto  # auto | cpu | cuda | mps
+    device_threads: 0  # 0 = auto
+    device_memory_fraction: 0.8
+
+    batch_size: null  # null = auto
+    use_fp16: false
+    normalize_embeddings: true
+    max_length: 32768
+
+    cleanup_interval: null  # null = auto
+    use_jemalloc: true
+
+  openai:
+    api_key: ""  # Or set OPENAI_API_KEY env var
+    model: "text-embedding-3-small"
+    batch_size: 100
+    max_retries: 6
+    rate_limit_rpm: 3000
+    rate_limit_tpm: 1000000
+    timeout: 60
+    organization: null
+
+storage:
+  provider: chromadb
+  chromadb:
+    host: localhost
+    port: 8000
+    collection_name: codecontext_index
+
+indexing:
+  file_chunk_size: 30
+  batch_size: 128
+  languages:
+    - python
+    - kotlin
+    - java
+    - javascript
+    - typescript
+    - markdown
+    - json
+    - yaml
+    - properties
+  max_file_size_mb: 10
+
+  parallel_workers: 0  # 0 = auto
+
+  memory_management:
+    force_gc_after_chunk: true
+    clear_gpu_cache: true
+    gpu_sync_before_clear: true
+
+  parsing:
+    timeout_micros: 5000000  # 5 seconds
+    enable_error_recovery: true
+    partial_parse_threshold: 0.5
+    enable_chunking: true
+    chunking_threshold_lines: 1000
+    chunking_threshold_bytes: 50000
+
+search:
+  default_limit: 10
+
+  # Adaptive Fusion: BM25 keyword weight (0.0-1.0)
+  # Automatically adjusts for cross-lingual queries
+  bm25_weight: 0.4  # 40% keyword + 60% semantic
+
+  # MMR diversity parameter (0.0-1.0)
+  mmr_lambda: 0.75  # 75% relevance + 25% diversity
+
+  # Graph Expansion (GraphRAG) - 1-hop relationship traversal
+  enable_graph_expansion: true
+  graph_max_hops: 1              # Relationship hops (1-3)
+  graph_ppr_threshold: 0.4       # PPR score threshold
+  graph_score_weight: 0.3        # Graph weight vs original
+
+  # Retrieval quality optimization
+  bm25_retrieval_multiplier: 5   # Over-retrieve for better recall
+  vector_retrieval_multiplier: 5
+
+  # File diversity filter
+  max_chunks_per_file: 2         # Max chunks per file
+  diversity_preserve_top_n: 1    # Always preserve top-N
+
+logging:
+  level: INFO  # DEBUG | INFO | WARNING | ERROR
+  format: text  # text | json
+
+# ═══════════════════════════════════════════════════════
+# Quick Reference
+# ═══════════════════════════════════════════════════════
+
+# Search Algorithm (Hybrid Multi-Stage Pipeline):
+# 1. Query Expansion → case variants, abbreviations, synonyms
+# 2. Translation (optional) → cross-lingual support (200 languages)
+# 3. Dual Retrieval → BM25 (keyword) + Vector (semantic)
+# 4. Adaptive Fusion → normalized linear combination (auto-adjusts)
+# 5. File Diversity → prevent single-file monopolization
+# 6. Graph Expansion (GraphRAG) → 1-hop PPR relationship traversal
+# 7. MMR Re-ranking → balance relevance and diversity
+
+# Search Tuning:
+# - bm25_weight: 0.4 = 40% keyword + 60% semantic (balanced)
+#   Higher (0.6-0.7) = favor exact matches, Lower (0.2-0.3) = favor concepts
+# - mmr_lambda: 0.75 = 75% relevance + 25% diversity
+#   Higher (0.9) = more similar results, Lower (0.5) = more diverse results
+# - max_chunks_per_file: 2 = prevent result monopolization
+#   Higher (3-5) = more context per file, Lower (1) = strict diversity
+# - graph_ppr_threshold: 0.4 = moderate expansion
+#   Higher (0.6) = stricter filtering, Lower (0.2) = aggressive expansion
+
+# Embedding Configuration:
+# - Batch Size: null (auto) → device default (cpu:32, mps:64, cuda:128)
+# - Device Defaults: CPU: batch=16, MPS: batch=64, CUDA: batch=128
+
+# Performance Tips:
+# - MPS (Apple Silicon): device=auto, use_fp16=false, batch_size=null
+# - CUDA (NVIDIA): device=auto, use_fp16=true, batch_size=null
+# - CPU: device=cpu, batch_size=16, device_threads=4
+
+# Memory Tips:
+# - Low (8GB RAM):    file_chunk_size=30, batch_size=16, parallel_workers=1
+# - Normal (16GB):    file_chunk_size=50, batch_size=null, parallel_workers=0
+# - High (32GB+):     file_chunk_size=100, batch_size=null, parallel_workers=8
+
+# CPU Memory Optimization (jemalloc):
+# - Install: brew install jemalloc (macOS) | apt install libjemalloc-dev (Linux)
+# - Use: LD_PRELOAD=/path/to/libjemalloc.so codecontext index
+# - Benefits: -34% peak memory, -53% average, +2.2x speed
