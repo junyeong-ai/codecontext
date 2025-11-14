@@ -34,7 +34,20 @@ pip install codecontext-core
 - **ObjectType**: Types of code objects (class, method, function, etc.)
 - **Language**: Supported programming languages
 - **NodeType**: Types of document nodes
-- **RelationType**: Types of relationships between entities
+- **RelationType**: Types of relationships between entities (22 types - 11 bidirectional pairs)
+  - **Code-to-Code (8 pairs):**
+    - CALLS ↔ CALLED_BY
+    - REFERENCES ↔ REFERENCED_BY
+    - EXTENDS ↔ EXTENDED_BY
+    - IMPLEMENTS ↔ IMPLEMENTED_BY
+    - CONTAINS ↔ CONTAINED_BY
+    - IMPORTS ↔ IMPORTED_BY
+    - DEPENDS_ON ↔ DEPENDED_BY
+    - ANNOTATES ↔ ANNOTATED_BY
+  - **Document-to-Code (3 pairs):**
+    - DOCUMENTS ↔ DOCUMENTED_BY
+    - MENTIONS ↔ MENTIONED_IN
+    - IMPLEMENTS_SPEC ↔ IMPLEMENTED_IN
 - **IndexStatus**: Status of the index
 
 ### Exceptions
@@ -48,10 +61,7 @@ pip install codecontext-core
 
 ## Python Version Support
 
-- Python 3.11+
-- Python 3.12
 - Python 3.13
-- Python 3.14
 
 ## License
 
