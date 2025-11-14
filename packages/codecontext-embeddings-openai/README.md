@@ -54,7 +54,7 @@ with OpenAIEmbeddingProvider(config) as provider:
 
 ## Python Version Support
 
-- Python 3.11-3.14 ✅
+- Python 3.13
 
 ## License
 
