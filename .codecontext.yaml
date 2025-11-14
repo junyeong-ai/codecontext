@@ -28,3 +28,8 @@ storage:
   local:
     path: .codecontext/chroma
     port: 8000
+
+embeddings:
+  provider: huggingface
+  huggingface:
+    device: cpu
