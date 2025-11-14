@@ -23,7 +23,7 @@ stack:
 capabilities:
   - Hybrid Search: 8-stage pipeline (Translation → Expansion → BM25 → Vector → Fusion → GraphRAG → MMR → Diversity)
   - Translation: 200 languages (auto-detect, Korean/etc → English)
-  - Relationships: 26 RelationType (13 bidirectional pairs)
+  - Relationships: 22 RelationType (11 bidirectional pairs)
   - Document-Code Linking: Automatic markdown → code reference extraction
   - Languages: Python, Kotlin, Java, JavaScript, TypeScript (AST parsing)
   - Optimizers: Language-specific AST optimization (Python, Java, Kotlin, TS)
@@ -72,7 +72,7 @@ Source Code + Documentation
 
 ```
 packages/
-├── codecontext-core/              # Interfaces, data models, RelationType (26)
+├── codecontext-core/              # Interfaces, data models, RelationType (22)
 ├── codecontext-cli/               # CLI, orchestration, search, indexing
 ├── codecontext-embeddings-huggingface/   # Local embeddings
 ├── codecontext-embeddings-openai/        # OpenAI embeddings
@@ -117,7 +117,7 @@ packages/
 
 ## Relationship System
 
-### RelationType (26 types - 13 pairs)
+### RelationType (22 types - 11 pairs)
 
 **Code-to-Code: Forward (8)**
 - CALLS, REFERENCES, EXTENDS, IMPLEMENTS, CONTAINS, IMPORTS, DEPENDS_ON, ANNOTATES
@@ -125,7 +125,7 @@ packages/
 **Code-to-Code: Reverse (8)**
 - CALLED_BY, REFERENCED_BY, EXTENDED_BY, IMPLEMENTED_BY, CONTAINED_BY, IMPORTED_BY, DEPENDED_BY, ANNOTATED_BY
 
-**Document-to-Code (10 types - 5 pairs)**
+**Document-to-Code (6 types - 3 pairs)**
 - DOCUMENTS ↔ DOCUMENTED_BY
 - MENTIONS ↔ MENTIONED_IN
 - IMPLEMENTS_SPEC ↔ IMPLEMENTED_IN
@@ -383,7 +383,7 @@ See [docs/MEMORY_OPTIMIZATION.md](docs/MEMORY_OPTIMIZATION.md) for complete guid
 - Config schema: `packages/codecontext-cli/src/codecontext/config/schema.py`
 
 **Data Models:**
-- RelationType (26): `packages/codecontext-core/src/codecontext_core/models/core.py`
+- RelationType (22): `packages/codecontext-core/src/codecontext_core/models/core.py`
 - Relationship utils: `packages/codecontext-core/src/codecontext_core/relationship_utils.py`
 - Interfaces: `packages/codecontext-core/src/codecontext_core/interfaces.py`
 

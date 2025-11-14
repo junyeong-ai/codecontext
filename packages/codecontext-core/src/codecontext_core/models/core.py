@@ -59,9 +59,9 @@ class NodeType(str, Enum):
 class RelationType(str, Enum):
     """Types of relationships between code objects and documents.
 
-    Clean design with 26 types (13 bidirectional pairs):
+    Clean design with 22 types (11 bidirectional pairs):
     - Code-to-Code: 16 types (8 pairs)
-    - Document-Code: 10 types (5 pairs)
+    - Document-Code: 6 types (3 pairs)
 
     Each forward relationship (e.g., CALLS) has a corresponding reverse
     relationship (e.g., CALLED_BY) for efficient bidirectional queries.
