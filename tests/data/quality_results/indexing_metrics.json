@@ -1,0 +1,108 @@
+{
+  "summary": {
+    "test_name": "Indexing",
+    "duration_seconds": 71.5847749710083,
+    "peak_cpu_percent": 653.1,
+    "peak_memory_mb": 7249.828125,
+    "avg_cpu_percent": 187.24375,
+    "avg_memory_mb": 4155.2021484375
+  },
+  "snapshots": [
+    {
+      "timestamp": 1763009569.7135339,
+      "cpu_percent": 0.1,
+      "memory_mb": 365.859375,
+      "memory_percent": 0.7443428039550781
+    },
+    {
+      "timestamp": 1763009569.929971,
+      "cpu_percent": 98.39999999999999,
+      "memory_mb": 486.828125,
+      "memory_percent": 0.990454355875651
+    },
+    {
+      "timestamp": 1763009575.164226,
+      "cpu_percent": 3.2,
+      "memory_mb": 775.0625,
+      "memory_percent": 1.5768686930338542
+    },
+    {
+      "timestamp": 1763009580.3870049,
+      "cpu_percent": 0.2,
+      "memory_mb": 789.5,
+      "memory_percent": 1.6062418619791667
+    },
+    {
+      "timestamp": 1763009585.609334,
+      "cpu_percent": 4.699999999999999,
+      "memory_mb": 799.546875,
+      "memory_percent": 1.6266822814941406
+    },
+    {
+      "timestamp": 1763009590.827774,
+      "cpu_percent": 82.8,
+      "memory_mb": 3861.65625,
+      "memory_percent": 7.856559753417969
+    },
+    {
+      "timestamp": 1763009596.0479438,
+      "cpu_percent": 253.9,
+      "memory_mb": 6535.40625,
+      "memory_percent": 13.296318054199219
+    },
+    {
+      "timestamp": 1763009601.26845,
+      "cpu_percent": 235.79999999999998,
+      "memory_mb": 6892.640625,
+      "memory_percent": 14.023113250732422
+    },
+    {
+      "timestamp": 1763009606.492192,
+      "cpu_percent": 296.6,
+      "memory_mb": 7249.828125,
+      "memory_percent": 14.749813079833984
+    },
+    {
+      "timestamp": 1763009611.7159941,
+      "cpu_percent": 281.20000000000005,
+      "memory_mb": 6079.34375,
+      "memory_percent": 12.368456522623699
+    },
+    {
+      "timestamp": 1763009616.939966,
+      "cpu_percent": 251.29999999999998,
+      "memory_mb": 6441.21875,
+      "memory_percent": 13.104693094889322
+    },
+    {
+      "timestamp": 1763009622.164439,
+      "cpu_percent": 423.40000000000003,
+      "memory_mb": 6472.578125,
+      "memory_percent": 13.1684939066569
+    },
+    {
+      "timestamp": 1763009627.382529,
+      "cpu_percent": 653.1,
+      "memory_mb": 6468.765625,
+      "memory_percent": 13.16073735555013
+    },
+    {
+      "timestamp": 1763009632.603064,
+      "cpu_percent": 165.2,
+      "memory_mb": 6856.8125,
+      "memory_percent": 13.950220743815104
+    },
+    {
+      "timestamp": 1763009637.826155,
+      "cpu_percent": 245.79999999999998,
+      "memory_mb": 6042.03125,
+      "memory_percent": 12.292544047037762
+    },
+    {
+      "timestamp": 1763009641.18223,
+      "cpu_percent": 0.2,
+      "memory_mb": 366.15625,
+      "memory_percent": 0.744946797688802
+    }
+  ]
+}
