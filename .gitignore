@@ -35,6 +35,11 @@ env/
 *~
 .DS_Store
 
+# Claude Code (.claude/ ignored except skills)
+.claude/
+!.claude/skills/
+!.claude/skills/codecontext/
+
 # Testing
 .coverage
 coverage.json
