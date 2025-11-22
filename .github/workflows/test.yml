@@ -1,0 +1,80 @@
+name: Test & Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-packages:
+    name: Test Package (${{ matrix.package }}, Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13', '3.14']
+        package: ['core', 'cli', 'embeddings-huggingface', 'embeddings-openai', 'storage-qdrant', 'translation-nllb']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install package dependencies
+        run: |
+          cd packages/codecontext-${{ matrix.package }}
+          uv sync
+
+      - name: Run tests with coverage
+        run: |
+          cd packages/codecontext-${{ matrix.package }}
+          uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./packages/codecontext-${{ matrix.package }}/coverage.xml
+          flags: ${{ matrix.package }}-py${{ matrix.python-version }}
+          name: codecontext-${{ matrix.package }}-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test-packages
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install all packages
+        run: uv sync
+
+      - name: Run integration tests
+        run: uv run pytest tests/ -m integration --cov --cov-report=xml --cov-report=term-missing
+
+      - name: Upload integration coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          flags: integration
+          name: codecontext-integration
+          fail_ci_if_error: false
