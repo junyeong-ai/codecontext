@@ -1,0 +1,4 @@
+# CodeContext
+.codecontext/chroma/
+.codecontext/logs/
+.codecontext/*.pid

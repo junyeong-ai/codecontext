@@ -1,0 +1,36 @@
+{
+  "summary": {
+    "test_name": "Indexing",
+    "duration_seconds": 9.894954919815063,
+    "peak_cpu_percent": 95.0,
+    "peak_memory_mb": 3521.375,
+    "avg_cpu_percent": 26.0,
+    "avg_memory_mb": 1549.7421875
+  },
+  "snapshots": [
+    {
+      "timestamp": 1763230394.820731,
+      "cpu_percent": 0.1,
+      "memory_mb": 75.609375,
+      "memory_percent": 0.15382766723632812
+    },
+    {
+      "timestamp": 1763230394.945624,
+      "cpu_percent": 95.0,
+      "memory_mb": 161.265625,
+      "memory_percent": 0.32809575398763025
+    },
+    {
+      "timestamp": 1763230400.2682261,
+      "cpu_percent": 8.8,
+      "memory_mb": 2440.71875,
+      "memory_percent": 4.965655008951822
+    },
+    {
+      "timestamp": 1763230404.603792,
+      "cpu_percent": 0.1,
+      "memory_mb": 3521.375,
+      "memory_percent": 7.164255777994792
+    }
+  ]
+}

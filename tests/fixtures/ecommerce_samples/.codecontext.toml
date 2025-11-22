@@ -1,0 +1,71 @@
+# CodeContext Quality Tests Configuration
+
+[embeddings]
+provider = "huggingface"
+
+[embeddings.huggingface]
+model_name = "jinaai/jina-code-embeddings-0.5b"
+device = "cpu"
+batch_size = 16
+normalize_embeddings = true
+max_length = 32768
+cleanup_interval = 5
+use_jemalloc = false
+
+[storage]
+provider = "qdrant"
+
+[storage.qdrant]
+mode = "remote"
+url = "http://localhost:6333"
+fusion_method = "rrf"
+prefetch_ratio_dense = 7.0
+prefetch_ratio_sparse = 3.0
+upsert_batch_size = 100
+enable_performance_logging = false
+
+[indexing]
+file_chunk_size = 30
+batch_size = 64
+languages = ["python", "kotlin", "java", "javascript", "typescript", "markdown"]
+max_file_size_mb = 10
+parallel_workers = 1
+
+[indexing.field_weights]
+name = 15
+qualified_name = 12
+signature = 10
+docstring = 8
+content = 6
+filename = 4
+file_path = 2
+k1 = 1.2
+b = 0.75
+avg_dl = 100.0
+
+[search]
+default_limit = 10
+enable_graph_expansion = true
+graph_max_hops = 1
+graph_ppr_threshold = 0.4
+graph_score_weight = 0.3
+max_chunks_per_file = 2
+diversity_preserve_top_n = 1
+
+[search.type_boosting]
+class = 0.12
+method = 0.10
+function = 0.10
+enum = 0.08
+interface = 0.06
+markdown = 0.05
+type = 0.04
+config = 0.03
+field = 0.02
+variable = 0.0
+
+[translation]
+enabled = false
+
+[logging]
+level = "INFO"
