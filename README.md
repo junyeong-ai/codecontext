@@ -2,13 +2,14 @@
 
 <div align="center">
 
-![Python](https://img.shields.io/badge/python-3.13-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Version](https://img.shields.io/badge/version-0.5.0-orange.svg)
-[![CI](https://github.com/junyeong-ai/codecontext/actions/workflows/ci.yml/badge.svg)](https://github.com/junyeong-ai/codecontext/actions)
-[![Coverage](https://codecov.io/gh/junyeong-ai/codecontext/graph/badge.svg)](https://codecov.io/gh/junyeong-ai/codecontext)
+[![Python](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.5.0-orange.svg)](https://github.com/junyeong-ai/codecontext/releases)
+[![Tests](https://github.com/junyeong-ai/codecontext/actions/workflows/test.yml/badge.svg)](https://github.com/junyeong-ai/codecontext/actions/workflows/test.yml)
+[![Lint](https://github.com/junyeong-ai/codecontext/actions/workflows/lint.yml/badge.svg)](https://github.com/junyeong-ai/codecontext/actions/workflows/lint.yml)
+[![codecov](https://codecov.io/gh/junyeong-ai/codecontext/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/junyeong-ai/codecontext)
 
-[English](README.en.md) | **한국어**
+🌐 [English](README.en.md) | **한국어**
 
 </div>
 
