@@ -1,5 +1,7 @@
+import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from codecontext_core import VectorStore
 from codecontext_core.interfaces import EmbeddingProvider, InstructionType
@@ -68,10 +70,16 @@ class SearchRetriever:
                 }
 
                 if payload.get("node_type") == "markdown":
-                    metadata["related_code"] = payload.get("related_code", [])
+                    metadata["related_code"] = self._parse_json_field(
+                        payload.get("related_code", ""), []
+                    )
                 elif payload.get("node_type") == "config":
-                    metadata["config_keys"] = payload.get("config_keys", [])
-                    metadata["env_references"] = payload.get("env_references", [])
+                    metadata["config_keys"] = self._parse_json_field(
+                        payload.get("config_keys", ""), []
+                    )
+                    metadata["env_references"] = self._parse_json_field(
+                        payload.get("env_references", ""), []
+                    )
                     metadata["section_depth"] = payload.get("section_depth", 1)
                     metadata["config_format"] = payload.get("config_format", "")
             else:
@@ -84,7 +92,7 @@ class SearchRetriever:
                     "object_type": payload.get("object_type"),
                     "language": payload.get("language", ""),
                     "parent_id": payload.get("parent_id"),
-                    "ast_metadata": payload.get("ast_metadata"),
+                    "ast_metadata": self._parse_json_field(payload.get("ast_metadata", ""), {}),
                     "score_weight": payload.get("score_weight", 1.0),
                     "relative_path": self._normalize_path(
                         payload.get("relative_path", payload.get("file_path", ""))
@@ -185,3 +193,17 @@ class SearchRetriever:
         if path.startswith("../"):
             return path[3:]
         return path
+
+    @staticmethod
+    def _parse_json_field(
+        value: str, default: dict[str, Any] | list[Any]
+    ) -> dict[str, Any] | list[Any]:
+        """Parse JSON string from storage to structured data."""
+        if not value:
+            return default
+        try:
+            parsed: dict[str, Any] | list[Any] = json.loads(value)
+            return parsed
+        except json.JSONDecodeError as e:
+            logger.warning(f"Malformed JSON in storage: {e}")
+            return default

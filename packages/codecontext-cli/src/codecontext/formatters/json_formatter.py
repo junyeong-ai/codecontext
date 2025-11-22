@@ -119,17 +119,16 @@ class JSONFormatter(BaseFormatter):
 
         # Add complexity
         if expand_all or "complexity" in expand_fields:
-            ast_metadata = result.metadata.get("ast_metadata")
-            if ast_metadata:
-                complexity = ast_metadata.get("complexity", {})
-                cyclomatic = complexity.get("cyclomatic", 1)
-                lines = complexity.get("lines", 0)
+            ast_metadata = result.metadata.get("ast_metadata", {})
+            complexity = ast_metadata.get("complexity", {})
+            cyclomatic = complexity.get("cyclomatic", 1)
+            lines = complexity.get("lines", 0)
 
-                if cyclomatic > 1 or lines > 0:
-                    expanded["complexity"] = {
-                        "cyclomatic": cyclomatic,
-                        "lines": lines,
-                    }
+            if cyclomatic > 1 or lines > 0:
+                expanded["complexity"] = {
+                    "cyclomatic": cyclomatic,
+                    "lines": lines,
+                }
 
         # Add relationships
         if (expand_all or "relationships" in expand_fields) and storage:

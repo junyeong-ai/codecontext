@@ -26,18 +26,14 @@ class DocumentFormatter(BaseFormatter):
         formatted = []
         for result in results:
             related_code_refs = result.metadata.get("related_code", [])
-            related_code = (
-                [
-                    {
-                        "name": ref.get("name", ""),
-                        "location": ref.get("location", ""),
-                        "match_reason": ref.get("match_reason", "mentioned"),
-                    }
-                    for ref in related_code_refs
-                ]
-                if related_code_refs
-                else []
-            )
+            related_code = [
+                {
+                    "name": ref.get("name", ""),
+                    "location": ref.get("location", ""),
+                    "match_reason": ref.get("match_reason", "mentioned"),
+                }
+                for ref in related_code_refs
+            ]
 
             related_sections = find_related_sections(result, storage) if storage else []
 

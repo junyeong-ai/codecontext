@@ -25,7 +25,6 @@ class ConfigFormatter(BaseFormatter):
         """Format config results as JSON."""
         formatted = []
         for result in results:
-            # Metadata is already parsed by retriever
             config_keys = result.metadata.get("config_keys", [])
             env_refs = result.metadata.get("env_references", [])
             section_depth = result.metadata.get("section_depth", 1)

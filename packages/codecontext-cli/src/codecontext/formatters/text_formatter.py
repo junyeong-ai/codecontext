@@ -115,14 +115,13 @@ class TextFormatter(BaseFormatter):
 
         # Complexity
         if expand_all or "complexity" in expand_fields:
-            ast_metadata = metadata.get("ast_metadata")
-            if ast_metadata:
-                complexity = ast_metadata.get("complexity", {})
-                cyclomatic = complexity.get("cyclomatic", 1)
-                code_lines = complexity.get("lines", 0)
+            ast_metadata = metadata.get("ast_metadata", {})
+            complexity = ast_metadata.get("complexity", {})
+            cyclomatic = complexity.get("cyclomatic", 1)
+            code_lines = complexity.get("lines", 0)
 
-                if cyclomatic > 1 or code_lines > 0:
-                    lines.append(f"   Complexity: cyclomatic={cyclomatic}, lines={code_lines}")
+            if cyclomatic > 1 or code_lines > 0:
+                lines.append(f"   Complexity: cyclomatic={cyclomatic}, lines={code_lines}")
 
         # Snippet
         if expand_all or "snippet" in expand_fields:
