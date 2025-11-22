@@ -1,0 +1,235 @@
+# This is a UV workspace. Source code is in packages/.
+# For development: uv sync
+# For CLI: uv run codecontext
+
+[project]
+name = "codecontext-workspace"
+version = "0.5.0"
+description = "CodeContext development workspace - not a package"
+requires-python = ">=3.13,<3.14"
+license = {text = "MIT"}
+dependencies = []
+
+[tool.uv]
+package = false  # Mark as virtual workspace (non-installable)
+
+[build-system]
+requires = ["setuptools>=80.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv.workspace]
+members = [
+    "packages/codecontext-core",
+    "packages/codecontext-cli",
+    "packages/codecontext-embeddings-huggingface",
+    "packages/codecontext-embeddings-openai",
+    "packages/codecontext-storage-qdrant",
+    "packages/codecontext-translation-nllb",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py313']
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "C90",    # mccabe complexity
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "ANN",    # flake8-annotations
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "SIM",    # flake8-simplify
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "RUF",    # ruff-specific rules
+    "BLE",    # flake8-blind-except
+    "TRY",    # tryceratops
+    "ERA",    # eradicate (commented code)
+]
+ignore = []  # No ignores - fix all issues properly
+
+[tool.ruff.lint.per-file-ignores]
+"tests/fixtures/__init__.py" = [
+    "ERA001",  # Allow example imports in documentation comments
+    "RUF022",  # Allow grouped __all__ for readability
+]
+"tests/fixtures/documents.py" = [
+    "RUF022",  # Allow grouped __all__ for readability
+]
+"tests/**/*.py" = [
+    "ANN001",  # Missing type annotation for function argument
+    "ANN002",  # Missing type annotation for *args
+    "ANN003",  # Missing type annotation for **kwargs
+    "ANN201",  # Missing return type annotation
+    "ANN202",  # Missing return type annotation for private function
+    "ANN204",  # Missing return type annotation for special method
+    "ANN206",  # Missing return type annotation for class method
+    "ARG001",  # Unused function argument (fixtures)
+    "ARG002",  # Unused method argument (fixtures)
+    "ARG004",  # Unused static method argument
+    "ARG005",  # Unused lambda argument
+    "A001",    # Variable shadowing builtin (filter, etc.)
+    "A002",    # Function argument shadowing builtin
+    "A006",    # Lambda argument shadowing builtin
+    "BLE001",  # Blind except (acceptable in test cleanup)
+    "PTH101",  # os.chmod usage (acceptable in tests)
+    "SIM102",  # Collapsible if (readability in tests)
+    "N812",    # Lowercase imported as non-lowercase
+    "N817",    # CamelCase imported as acronym
+    "TRY003",  # Raise vanilla args (acceptable in tests)
+]
+"packages/codecontext-cli/src/codecontext/commands/*.py" = [
+    "B008",    # Function call in default argument (Typer pattern)
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true  # ✅ 타입 없는 함수 정의 금지
+disallow_incomplete_defs = true  # ✅ 불완전한 타입 정의 금지
+check_untyped_defs = true  # ✅ 타입 없는 함수도 체크
+strict = true  # ✅ Strict 모드 활성화
+namespace_packages = true
+exclude = [".*/build/.*", ".*/dist/.*", "tests/performance/.*"]
+mypy_path = [
+    "packages/codecontext-core/src",
+    "packages/codecontext-cli/src",
+    "packages/codecontext-embeddings-huggingface/src",
+    "packages/codecontext-embeddings-openai/src",
+    "packages/codecontext-storage-qdrant/src",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "qdrant_client.*",
+    "fastembed.*",
+    "tree_sitter_language_pack.*",
+    "git.*",
+    "nest_asyncio",
+    "transformers",
+    "langdetect",
+    "codecontext_translation_nllb.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+# 테스트 코드 타입 체크 (pytest fixture 특성 고려한 균형있는 설정)
+disallow_untyped_defs = false  # pytest fixture 자동 주입으로 인해 허용
+disallow_incomplete_defs = false  # pytest fixture 고려
+check_untyped_defs = true  # ✅ 타입이 있는 함수는 체크
+disallow_any_generics = false  # pytest fixture 고려
+warn_return_any = false  # pytest fixture 고려
+
+[[tool.mypy.overrides]]
+module = "tests.fixtures.search_helpers"
+# 테스트 헬퍼는 더 엄격하게
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=codecontext --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html"
+asyncio_mode = "auto"
+pythonpath = [
+    "packages/codecontext-cli/src",
+    "packages/codecontext-core/src",
+    "packages/codecontext-embeddings-huggingface/src",
+    "packages/codecontext-embeddings-openai/src",
+]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "quality: marks tests as quality validation tests (heavy E2E tests, not run in CI/CD)",
+    "asyncio: marks tests as async tests (handled by pytest-asyncio)",
+]
+# Force anyio to use asyncio backend only (project uses asyncio, not trio)
+anyio_mode = "asyncio"
+
+[tool.coverage.run]
+source = ["codecontext"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.vulture]
+min_confidence = 80
+paths = ["packages/codecontext-cli/src"]
+ignore_names = ["test_*", "setUp*", "tearDown*"]
+
+[tool.pylint.SIMILARITIES]
+min-similarity-lines = 10
+ignore-comments = "yes"
+ignore-docstrings = "yes"
+
+[tool.radon]
+# Cyclomatic complexity thresholds
+cc_min = "B"  # Minimum grade (A-F)
+cc_max = "C"  # Maximum grade
+
+[dependency-groups]
+dev = [
+    # Code Quality Tools
+    "black>=24.0.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.0,<2.0.0",
+    "pylint>=4.0.0,<5.0.0",
+    "radon>=6.0.1",
+    "vulture>=2.14",
+    # Testing
+    "pytest-cov>=7.0.0,<8.0.0",
+    "pytest-asyncio>=1.3.0,<2.0.0",
+    # Type Stubs
+    "types-PyYAML>=6.0.12",
+    "types-psutil>=7.0.0",
+    "types-toml>=0.10.8",
+    # Runtime Dependencies (needed for development)
+    "pydantic>=2.11.0,<3.0.0",
+    "torch>=2.9.1,<3.0.0",
+    "numpy>=2.0.0,<3.0.0",
+    "typer>=0.20.0,<1.0.0",
+    "tree_sitter>=0.25.2,<1.0.0",
+    "langchain-text-splitters>=1.0.0,<2.0.0",
+    "GitPython>=3.1.45,<4.0.0",
+    "openai>=2.7.0,<3.0.0",
+    "tenacity>=9.1.0,<10.0.0",
+    "tiktoken>=0.12.0,<1.0.0",
+    "nest_asyncio>=1.6.0,<2.0.0",
+    "rich>=14.2.0,<15.0.0",
+    "xxhash>=3.6.0,<4.0.0",
+    "toml>=0.10.2",
+    "psutil>=7.1.3",
+]

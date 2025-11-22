@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude Code (.claude/ ignored except skills)
+.claude/
+!.claude/skills/
+!.claude/skills/codecontext/
+
+# Testing
+.coverage
+coverage.json
+.pytest_cache/
+htmlcov/
+.tox/
+.hypothesis/
+.ruff_cache/
+.benchmarks/
+quality_tests/*.json
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Environment variables
+.env
+.env.local
+
+# CodeContext specific
+*.db
+*.sqlite
+chroma/
+
+# Logs
+*.log
+logs/
+*.pid
+
+# Models cache
+models/
+.cache/
+
+# AI Agent Tools
+.serena/
+.claude/
+.specify/
+coverage.xml
+
+
+# CodeContext
+.codecontext/chroma/
+.codecontext/logs/
+.codecontext/*.pid
+
+# Qdrant storage (docker-compose volume)
+qdrant_storage/
