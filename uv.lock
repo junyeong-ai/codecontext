@@ -334,6 +334,7 @@ source = { virtual = "." }
 [package.dev-dependencies]
 dev = [
     { name = "black" },
+    { name = "codecontext-cli" },
     { name = "gitpython" },
     { name = "langchain-text-splitters" },
     { name = "mypy" },
@@ -366,6 +367,7 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = ">=24.0.0" },
+    { name = "codecontext-cli", editable = "packages/codecontext-cli" },
     { name = "gitpython", specifier = ">=3.1.45,<4.0.0" },
     { name = "langchain-text-splitters", specifier = ">=1.0.0,<2.0.0" },
     { name = "mypy", specifier = ">=1.18.0,<2.0.0" },

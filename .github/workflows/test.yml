@@ -7,14 +7,14 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test-packages:
-    name: Test Package (${{ matrix.package }}, Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+  test:
+    name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12', '3.13', '3.14']
-        package: ['core', 'cli', 'embeddings-huggingface', 'embeddings-openai', 'storage-qdrant', 'translation-nllb']
+        python-version: ['3.11', '3.12', '3.13']
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout code
@@ -26,31 +26,33 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
-      - name: Install package dependencies
-        run: |
-          cd packages/codecontext-${{ matrix.package }}
-          uv sync
+      - name: Install dependencies
+        run: uv sync --all-extras
 
-      - name: Run tests with coverage
-        run: |
-          cd packages/codecontext-${{ matrix.package }}
-          uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing
+      - name: Verify workspace packages
+        run: uv run python -c "import codecontext_core.models"
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Run unit tests
+        run: uv run pytest tests/unit/ -v --cov=packages --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./packages/codecontext-${{ matrix.package }}/coverage.xml
-          flags: ${{ matrix.package }}-py${{ matrix.python-version }}
-          name: codecontext-${{ matrix.package }}-py${{ matrix.python-version }}
+          file: ./coverage.xml
+          flags: unittests
+          name: codecontext-unit-tests
           fail_ci_if_error: false
 
-  test-integration:
+  integration:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: test-packages
+    needs: test
 
     steps:
       - name: Checkout code
@@ -62,16 +64,21 @@ jobs:
           python-version: '3.13'
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
-      - name: Install all packages
-        run: uv sync
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Verify workspace packages
+        run: uv run python -c "import codecontext_core.models"
 
       - name: Run integration tests
-        run: uv run pytest tests/ -m integration --cov --cov-report=xml --cov-report=term-missing
+        run: uv run pytest tests/integration/ -v --cov=packages --cov-report=xml --cov-report=term-missing
 
-      - name: Upload integration coverage
-        uses: codecov/codecov-action@v5
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml

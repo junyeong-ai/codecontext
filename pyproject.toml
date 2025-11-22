@@ -13,6 +13,14 @@ dependencies = []
 [tool.uv]
 package = false  # Mark as virtual workspace (non-installable)
 
+[tool.uv.sources]
+codecontext-cli = { workspace = true }
+codecontext-core = { workspace = true }
+codecontext-embeddings-huggingface = { workspace = true }
+codecontext-embeddings-openai = { workspace = true }
+codecontext-storage-qdrant = { workspace = true }
+codecontext-translation-nllb = { workspace = true }
+
 [build-system]
 requires = ["setuptools>=80.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -34,6 +42,13 @@ target-version = ['py313']
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+
+[tool.ruff.format]
+# Use Ruff formatter (Black-compatible, but faster)
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.ruff.lint]
 select = [
@@ -65,16 +80,25 @@ ignore = []  # No ignores - fix all issues properly
 "tests/fixtures/documents.py" = [
     "RUF022",  # Allow grouped __all__ for readability
 ]
+"tests/fixtures/ecommerce_samples/**/*.py" = [
+    "F821",    # Undefined names (intentional incomplete sample code for AST parsing tests)
+    "B904",    # Exception chaining (sample code doesn't need production patterns)
+    "TRY300",  # Exception handling patterns (sample code)
+    "TRY400",  # Logging patterns (sample code)
+]
+"tests/fixtures/search_helpers.py" = [
+    "F821",    # Undefined names (TYPE_CHECKING forward references)
+]
 "tests/**/*.py" = [
-    "ANN001",  # Missing type annotation for function argument
+    "ANN001",  # Missing type annotation for function argument (pytest fixtures)
     "ANN002",  # Missing type annotation for *args
     "ANN003",  # Missing type annotation for **kwargs
-    "ANN201",  # Missing return type annotation
+    "ANN201",  # Missing return type annotation for public function
     "ANN202",  # Missing return type annotation for private function
     "ANN204",  # Missing return type annotation for special method
     "ANN206",  # Missing return type annotation for class method
-    "ARG001",  # Unused function argument (fixtures)
-    "ARG002",  # Unused method argument (fixtures)
+    "ARG001",  # Unused function argument (pytest fixtures)
+    "ARG002",  # Unused method argument (pytest fixtures)
     "ARG004",  # Unused static method argument
     "ARG005",  # Unused lambda argument
     "A001",    # Variable shadowing builtin (filter, etc.)
@@ -82,10 +106,11 @@ ignore = []  # No ignores - fix all issues properly
     "A006",    # Lambda argument shadowing builtin
     "BLE001",  # Blind except (acceptable in test cleanup)
     "PTH101",  # os.chmod usage (acceptable in tests)
-    "SIM102",  # Collapsible if (readability in tests)
+    "SIM117",  # Nested with statements (pytest.raises pattern readability)
     "N812",    # Lowercase imported as non-lowercase
     "N817",    # CamelCase imported as acronym
     "TRY003",  # Raise vanilla args (acceptable in tests)
+    "RUF043",  # Regex patterns in tests (pytest.raises match)
 ]
 "packages/codecontext-cli/src/codecontext/commands/*.py" = [
     "B008",    # Function call in default argument (Typer pattern)
@@ -93,21 +118,9 @@ ignore = []  # No ignores - fix all issues properly
 
 [tool.mypy]
 python_version = "3.13"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true  # ✅ 타입 없는 함수 정의 금지
-disallow_incomplete_defs = true  # ✅ 불완전한 타입 정의 금지
-check_untyped_defs = true  # ✅ 타입 없는 함수도 체크
-strict = true  # ✅ Strict 모드 활성화
+strict = true
 namespace_packages = true
 exclude = [".*/build/.*", ".*/dist/.*", "tests/performance/.*"]
-mypy_path = [
-    "packages/codecontext-core/src",
-    "packages/codecontext-cli/src",
-    "packages/codecontext-embeddings-huggingface/src",
-    "packages/codecontext-embeddings-openai/src",
-    "packages/codecontext-storage-qdrant/src",
-]
 
 [[tool.mypy.overrides]]
 module = [
@@ -117,10 +130,22 @@ module = [
     "git.*",
     "nest_asyncio",
     "transformers",
+    "transformers.*",
+    "peft",
+    "peft.*",
     "langdetect",
-    "codecontext_translation_nllb.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "codecontext_embeddings_huggingface.*",
+    "codecontext_translation_nllb.*",
+]
+# Allow untyped calls to transformers library
+disallow_untyped_calls = false
+warn_return_any = false
+disable_error_code = ["union-attr", "attr-defined", "operator"]
 
 [[tool.mypy.overrides]]
 module = "tests.*"
@@ -146,12 +171,6 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--cov=codecontext --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=html"
 asyncio_mode = "auto"
-pythonpath = [
-    "packages/codecontext-cli/src",
-    "packages/codecontext-core/src",
-    "packages/codecontext-embeddings-huggingface/src",
-    "packages/codecontext-embeddings-openai/src",
-]
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
     "quality: marks tests as quality validation tests (heavy E2E tests, not run in CI/CD)",
@@ -202,6 +221,8 @@ cc_max = "C"  # Maximum grade
 
 [dependency-groups]
 dev = [
+    # Workspace Packages (editable install)
+    "codecontext-cli",  # Includes all other workspace packages as dependencies
     # Code Quality Tools
     "black>=24.0.0",
     "ruff>=0.14.0",

@@ -1,20 +1,15 @@
-"""Pytest configuration for tests."""
+"""Pytest configuration for tests.
+
+With UV workspace editable installs, all packages are properly installed
+and importable. No sys.path manipulation needed.
+"""
 
 import pytest
-
-# Register fixture modules as pytest plugins
-# NOTE: These modules must be registered here to make fixtures available
-pytest_plugins = [
-    "tests.fixtures.storage",
-    "tests.fixtures.parsers",
-    "tests.fixtures.documents",
-    "tests.fixtures.codebase",
-]
 
 
 # Force anyio to use only asyncio backend (not trio)
 @pytest.fixture
-def anyio_backend():
+def anyio_backend() -> str:
     return "asyncio"
 
 

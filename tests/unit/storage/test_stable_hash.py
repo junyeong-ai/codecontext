@@ -27,7 +27,7 @@ print(_stable_hash("OrderService"))
             [sys.executable, "-c", test_code],
             capture_output=True,
             text=True,
-            cwd="/Users/a16801/Workspace/codecontext",
+            check=True,
         )
         results.append(result.stdout.strip())
 

@@ -70,9 +70,16 @@ chroma/
 logs/
 *.pid
 
-# Models cache
-models/
+# ML Model files (not source code directories!)
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.pb
+*.safetensors
+*.onnx
 .cache/
+downloaded_models/
 
 # AI Agent Tools
 .serena/

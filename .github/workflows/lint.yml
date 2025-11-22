@@ -7,8 +7,8 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  ruff-check:
-    name: Ruff Lint & Format Check
+  lint:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
 
     steps:
@@ -21,43 +21,28 @@ jobs:
           python-version: '3.13'
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
-      - name: Run Ruff linter
-        run: uv run ruff check .
+      - name: Verify workspace packages
+        run: uv run python -c "import codecontext_core.models"
 
-      - name: Run Ruff formatter check
-        run: uv run ruff format --check .
+      - name: Lint
+        run: uv run ruff check packages/
 
-  mypy-check:
-    name: MyPy Type Check
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ['core', 'cli', 'embeddings-huggingface', 'embeddings-openai', 'storage-qdrant', 'translation-nllb']
+      - name: Format check
+        run: uv run ruff format --check packages/
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.13'
-
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install package dependencies
+      - name: Type check
         run: |
-          cd packages/codecontext-${{ matrix.package }}
-          uv sync
-
-      - name: Run MyPy
-        run: |
-          cd packages/codecontext-${{ matrix.package }}
-          uv run mypy src/
+          rm -rf .mypy_cache
+          uv run mypy packages/codecontext-core/src/ --strict
+          uv run mypy packages/codecontext-cli/src/ --strict
+          uv run mypy packages/codecontext-embeddings-huggingface/src/ --strict
+          uv run mypy packages/codecontext-embeddings-openai/src/ --strict
+          uv run mypy packages/codecontext-storage-qdrant/src/ --strict
+          uv run mypy packages/codecontext-translation-nllb/src/ --strict

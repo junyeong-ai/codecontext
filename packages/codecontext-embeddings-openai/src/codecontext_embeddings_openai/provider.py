@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import tiktoken
 from codecontext_core.exceptions import EmbeddingError
-from codecontext_core.interfaces import EmbeddingProvider
+from codecontext_core.interfaces import EmbeddingProvider, InstructionType
 from openai import APIConnectionError, APITimeoutError, AsyncOpenAI, RateLimitError
 from tiktoken import Encoding
 from tenacity import (
@@ -173,12 +173,15 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         else:
             return embeddings, actual_tokens
 
-    def embed_text(self, text: str) -> list[float]:
+    def embed_text(
+        self, text: str, instruction_type: InstructionType = InstructionType.NL2CODE_QUERY
+    ) -> list[float]:
         """
         Generate embedding for a single text.
 
         Args:
             text: Text to embed
+            instruction_type: Not used (OpenAI embeddings don't support instruction types)
 
         Returns:
             Embedding vector

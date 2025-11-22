@@ -1,6 +1,5 @@
 """Test text splitters compatibility with langchain implementations."""
 
-
 from codecontext.parsers.common.text_splitters import (
     Document,
     MarkdownHeaderSplitter,

@@ -131,4 +131,4 @@ def validate(
                     typer.echo(w, err=True)
     except Exception as e:
         typer.echo(f"✗ Invalid configuration: {e}", err=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e

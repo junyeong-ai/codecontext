@@ -94,6 +94,11 @@ class QdrantProvider(VectorStore):
             avg_dl=getattr(field_weights, "avg_dl", 100.0),
         )
 
+    def set_client(self, client: QdrantClient) -> None:
+        """Set external Qdrant client (for remote mode reuse)."""
+        self.client = client
+        logger.debug(f"Injected external Qdrant client for collection: {self.collection_name}")
+
     def initialize(self) -> None:
         try:
             if self.mode == "embedded":
@@ -173,7 +178,7 @@ class QdrantProvider(VectorStore):
         return SparseVector(indices=indices, values=values)
 
     def _document_to_sparse(self, doc: DocumentNode) -> SparseVector:
-        doc_dict = {
+        doc_dict: dict[str, str | None] = {
             "name": doc.title or "",
             "content": doc.content or "",
             "file_path": doc.file_path or "",
