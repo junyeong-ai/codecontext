@@ -63,7 +63,7 @@ def list_projects() -> None:
                         from rich.panel import Panel
 
                         info_text = (
-                            f"[bold cyan]{state.project_name or project_id}[/bold cyan] [dim]({project_id})[/dim]\n"
+                            f"[bold cyan]{state.project_name}[/bold cyan] [dim]({project_id})[/dim]\n"
                             f"Path: {state.repository_path}\n"
                             f"Last indexed: {state.last_indexed_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
                             f"Files: {state.total_files} | "
@@ -132,7 +132,7 @@ def list_projects() -> None:
                                 state_dict = (
                                     state.to_metadata() if hasattr(state, "to_metadata") else state
                                 )
-                                project_name = state_dict.get("project_id", "") or display_name
+                                project_name = state_dict.get("project_name", display_name)
                                 repo_path = state_dict.get("repository_path", "Unknown")
                                 last_indexed = state_dict.get("last_indexed_at", "Unknown")
                                 total_files = state_dict.get("total_files", 0)
@@ -224,9 +224,7 @@ def delete_project(
                 storage.initialize()
                 state = storage.get_index_state()
                 storage.close()
-                display_name = (
-                    f"{state.project_name} ({project})" if state and state.project_name else project
-                )
+                display_name = f"{state.project_name} ({project})" if state else project
             except Exception:
                 display_name = project
 
@@ -280,8 +278,10 @@ def delete_project(
                     if hasattr(storage, "set_client"):
                         storage.set_client(client)
                     state = storage.get_index_state()
-                    if state and state.get("project_id"):
-                        display_name = f"{state.get('project_id')} ({project})"
+                    if state:
+                        state_dict = state.to_metadata() if hasattr(state, "to_metadata") else state
+                        project_name = state_dict.get("project_name", project)
+                        display_name = f"{project_name} ({project})"
                 except Exception:
                     pass
 

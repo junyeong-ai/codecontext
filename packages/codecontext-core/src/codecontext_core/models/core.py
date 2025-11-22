@@ -419,8 +419,9 @@ class Relationship:
 class IndexState:
     """Tracks the state of the indexed codebase."""
 
-    project_id: str  # NEW: Unique project identifier for multi-project support
-    repository_path: str
+    project_id: str  # Unique project identifier (hash ID)
+    project_name: str  # Human-readable project name (directory name)
+    repository_path: str  # Absolute path to repository
     last_commit_hash: str
     last_indexed_at: datetime
     total_files: int
@@ -444,6 +445,7 @@ class IndexState:
         """Convert to metadata dict format."""
         return {
             "project_id": self.project_id,
+            "project_name": self.project_name,
             "repository_path": self.repository_path,
             "last_commit_hash": self.last_commit_hash,
             "last_indexed_at": self.last_indexed_at.isoformat(),
@@ -460,6 +462,7 @@ class IndexState:
         """Create IndexState from metadata dict."""
         return cls(
             project_id=metadata["project_id"],
+            project_name=metadata.get("project_name", metadata["project_id"]),  # Backward compatible
             repository_path=metadata["repository_path"],
             last_commit_hash=metadata["last_commit_hash"],
             last_indexed_at=datetime.fromisoformat(metadata["last_indexed_at"]),

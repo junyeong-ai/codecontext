@@ -62,10 +62,15 @@ class FullIndexStrategy(AsyncIndexStrategy):
         except Exception as e:
             logger.warning(f"Not a git repository: {e}")
 
-        # Create state
+        # Create state with absolute paths and proper project identification
+        from codecontext.utils.project import get_project_id
+
+        abs_repo_path = repository_path.resolve()
+
         state = IndexState(
-            project_id=repository_path.name,
-            repository_path=str(repository_path),
+            project_id=get_project_id(abs_repo_path),
+            project_name=abs_repo_path.name,
+            repository_path=str(abs_repo_path),
             last_commit_hash=current_commit,
             last_indexed_at=datetime.now(UTC),
             total_files=len(code_files) + len(document_files),
