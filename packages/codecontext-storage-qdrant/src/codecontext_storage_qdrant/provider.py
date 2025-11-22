@@ -70,7 +70,7 @@ class QdrantProvider(VectorStore):
         self.fusion_method = (
             fusion_method.value if hasattr(fusion_method, "value") else fusion_method
         )
-        self.prefetch_ratio_dense = getattr(config, "prefetch_ratio_dense", 5.0)
+        self.prefetch_ratio_dense = getattr(config, "prefetch_ratio_dense", 7.0)
         self.prefetch_ratio_sparse = getattr(config, "prefetch_ratio_sparse", 3.0)
 
         self.enable_performance_logging = getattr(config, "enable_performance_logging", False)

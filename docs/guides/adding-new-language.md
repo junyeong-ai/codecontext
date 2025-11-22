@@ -515,7 +515,7 @@ def test_{language}_end_to_end_indexing():
 
 If adding a language not already in `Language` enum:
 
-**File**: `codecontext/core/models.py`
+**File**: `codecontext_core/models/core.py`
 
 ```python
 class Language(str, Enum):

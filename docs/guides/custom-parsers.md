@@ -231,7 +231,7 @@ logging.basicConfig(level=logging.DEBUG)
 ### Parser Not Recognized
 
 **Solution**: Ensure language is registered in:
-1. `Language` enum (core/models.py)
+1. `Language` enum (codecontext_core/models/core.py)
 2. `LanguageDetector.EXTENSION_MAP`
 3. `ParserFactory._create_parser()`
 

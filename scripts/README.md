@@ -148,9 +148,9 @@ provider = "qdrant"
 [storage.qdrant]
 mode = "remote"                    # remote | embedded
 url = "http://localhost:6333"      # Remote Qdrant URL
-fusion_method = "weighted"         # rrf | weighted | dbsf
-prefetch_ratio_dense = 5.0
-prefetch_ratio_sparse = 5.0
+fusion_method = "rrf"              # rrf (default) | dbsf
+prefetch_ratio_dense = 7.0         # 70% emphasis on semantic
+prefetch_ratio_sparse = 3.0        # 30% emphasis on keyword
 ```
 
 **Embeddings**:
@@ -168,11 +168,12 @@ batch_size = 16
 **Search**:
 ```toml
 [search]
-enable_mmr = true
-mmr_lambda = 0.75
+default_limit = 10
 enable_graph_expansion = true
 graph_max_hops = 1
+graph_ppr_threshold = 0.4
 max_chunks_per_file = 2
+diversity_preserve_top_n = 1
 ```
 
 ---

@@ -123,8 +123,8 @@ High-level system design and data flow.
 **Purpose**: Generate vector embeddings for semantic search
 
 **Providers**:
-- **HuggingFace**: jina-code-0.5b (896-dim, local) - [embeddings-huggingface/](../packages/codecontext-embeddings-huggingface/)
-- **OpenAI**: text-embedding-3-* (1536/3072-dim, API) - [embeddings-openai/](../packages/codecontext-embeddings-openai/)
+- **HuggingFace**: jina-code-0.5b (896-dim, local) - [codecontext-embeddings-huggingface/](../packages/codecontext-embeddings-huggingface/)
+- **OpenAI**: text-embedding-3-* (1536/3072-dim, API) - [codecontext-embeddings-openai/](../packages/codecontext-embeddings-openai/)
 
 **Plugin**: Auto-registered via entry points
 
@@ -132,7 +132,7 @@ High-level system design and data flow.
 
 ### 4. Storage Layer
 
-**Provider**: Qdrant - [storage-qdrant/](../packages/codecontext-storage-qdrant/)
+**Provider**: Qdrant - [codecontext-storage-qdrant/](../packages/codecontext-storage-qdrant/)
 
 **Architecture**:
 - Single collection: `dense` (896-dim) + `sparse` (hash-based BM25F)
@@ -180,7 +180,7 @@ High-level system design and data flow.
 
 **DocumentNode**: heading | paragraph | code_block | config_key
 
-**Definition**: [core/models.py](../packages/codecontext-core/src/codecontext_core/models.py)
+**Definition**: [codecontext_core/models/core.py](../packages/codecontext-core/src/codecontext_core/models/core.py)
 
 ---
 

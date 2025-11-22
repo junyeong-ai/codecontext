@@ -13,7 +13,7 @@
 
 </div>
 
-> **Hybrid Search (75% Semantic + 25% Keyword) + Tree-sitter AST Parsing + Vector Embeddings**
+> **Hybrid Search (70% Semantic + 30% Keyword) + Tree-sitter AST Parsing + Vector Embeddings**
 
 Get instant answers to questions like **"Where is this feature?"** and **"What will this change affect?"** in large codebases.
 

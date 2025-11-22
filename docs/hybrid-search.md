@@ -144,7 +144,7 @@ avg_dl: 100.0      # Average document length
 
 ### 2.3 Fusion Methods
 
-**File:** `storage-qdrant/provider.py`
+**File:** `codecontext_storage_qdrant/provider.py`
 
 #### RRF (Reciprocal Rank Fusion)
 
@@ -158,14 +158,6 @@ fusion_type = Fusion.RRF  # Default for RRF/DBSF modes
 ```python
 fusion_type = Fusion.DBSF
 # Normalizes scores by distribution
-```
-
-#### Weighted Fusion
-
-```python
-# Parallel dense/sparse queries
-final_score = alpha * dense_score + (1-alpha) * sparse_score
-# alpha=0.75: 75% dense + 25% sparse
 ```
 
 ### 2.4 Prefetch Configuration
@@ -203,7 +195,7 @@ graph_ppr_threshold = 0.4
 
 ## Stage 4: Type/Name Boosting + Score Weight
 
-**File:** `search/retriever.py:111-153`
+**File:** `codecontext/search/retriever.py:117-153`
 
 ```python
 # Type boost (additive: 0.0-0.12)
@@ -227,7 +219,7 @@ final_score = base * (1 + boost) * weight
 - Score weight: 0.1-1.2x based on token count (from metadata, calculated during indexing)
 - Max combined: 1.37x × 1.2x = 1.644x
 
-**Score weight calculation** (`core/quality.py`):
+**Score weight calculation** (`codecontext_core/quality.py`):
 - < 10 tokens: 0.1-0.6 (filter low-information)
 - 10-20 tokens: 0.5-1.0 (borderline)
 - ≥ 20 tokens: 1.0-1.2 (normal, capped)
@@ -236,7 +228,7 @@ final_score = base * (1 + boost) * weight
 
 ## Stage 5: Diversity Filter & Top-K
 
-**File:** `search/retriever.py:119-140`
+**File:** `codecontext/search/retriever.py:155-182`
 
 **Purpose:** Prevent file monopolization and select final results
 
