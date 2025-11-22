@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=80.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codecontext-storage-qdrant"
+version = "0.5.0"
+description = "Qdrant storage backend for CodeContext"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = {text = "MIT"}
+authors = [{name = "CodeContext Team", email = "team@codecontext.dev"}]
+
+dependencies = [
+    "codecontext-core",
+    "qdrant-client>=1.15.1,<2.0.0",
+]
+
+[project.entry-points."codecontext.storage"]
+qdrant = "codecontext_storage_qdrant:QdrantProvider"
+
+[tool.uv.sources]
+codecontext-core = { workspace = true }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["codecontext_storage_qdrant*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py313']
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
