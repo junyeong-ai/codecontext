@@ -1,0 +1,16 @@
+# Test Coverage Reports
+htmlcov/
+.coverage
+*.coverage
+
+# Test Results
+.pytest_cache/
+__pycache__/
+
+# Baseline Metrics (legacy)
+baseline_metrics.json
+
+# Runtime Files
+*.pyc
+*.pyo
+*.log

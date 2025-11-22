@@ -1,0 +1,508 @@
+[[query]]
+id = "Q001"
+text = "order processing flow"
+category = "workflow"
+difficulty = "medium"
+intent = "Understand complete order lifecycle from creation to delivery"
+[[query.essential_symbols]]
+symbol = "CheckoutFlow"
+path = "frontend/web/components/checkout/CheckoutFlow.tsx"
+type = "component"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "class"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService::processOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderStatus"
+path = "services/order-service/src/main/java/com/ecommerce/order/domain/OrderStatus.java"
+type = "enum"
+priority = "H1"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "OrderController::createOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "Order"
+path = "services/order-service/src/main/java/com/ecommerce/order/domain/Order.java"
+type = "class"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "order-flow.md"
+path = "docs/business/order-flow.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[[query]]
+id = "Q002"
+text = "payment gateway integration"
+category = "integration"
+difficulty = "medium"
+intent = "Understand payment gateway abstraction and implementations"
+[[query.essential_symbols]]
+symbol = "PaymentGateway"
+path = "services/payment-service/src/payment_gateway.py"
+type = "protocol"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "StripePaymentGateway"
+path = "services/payment-service/src/payment_gateway.py"
+type = "class"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "PayPalPaymentGateway"
+path = "services/payment-service/src/payment_gateway.py"
+type = "class"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "PaymentService::processPayment"
+path = "services/payment-service/src/payment_service.py"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "Payment"
+path = "services/payment-service/src/models/payment.py"
+type = "class"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "PaymentStatus"
+path = "services/payment-service/src/models/payment.py"
+type = "enum"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "payment-gateway.md"
+path = "docs/business/payment-gateway.md"
+type = "document"
+priority = "H1"
+category = "documentation"
+
+
+[[query]]
+id = "Q003"
+text = "customer tier discount system"
+category = "business_logic"
+difficulty = "easy"
+intent = "Modify tier discount rates or understand discount calculation"
+[[query.essential_symbols]]
+symbol = "Customer::getTierDiscount"
+path = "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/Customer.kt"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService::getTierDiscount"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "getTierDiscount"
+path = "frontend/web/utils/formatPrice.js"
+type = "function"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "CustomerTier"
+path = "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/CustomerTier.kt"
+type = "enum"
+priority = "H1"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "CustomerService::calculateTier"
+path = "services/customer-service/src/main/kotlin/com/ecommerce/customer/service/CustomerService.kt"
+type = "method"
+priority = "H2"
+category = "context"
+
+[[query.essential_symbols]]
+symbol = "customer-tier.md"
+path = "docs/business/customer-tier.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[[query]]
+id = "Q004"
+text = "inventory stock management"
+category = "service"
+difficulty = "easy"
+intent = "Understand inventory operations and stock tracking"
+[[query.essential_symbols]]
+symbol = "InventoryService"
+path = "services/inventory-service/src/inventory_service.py"
+type = "class"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "InventoryService::checkStock"
+path = "services/inventory-service/src/inventory_service.py"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "InventoryService::reserveStock"
+path = "services/inventory-service/src/inventory_service.py"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService::processOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "InventoryService::releaseReservation"
+path = "services/inventory-service/src/inventory_service.py"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "Product"
+path = "services/inventory-service/src/models/product.py"
+type = "class"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "inventory-management.md"
+path = "docs/business/inventory-management.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[[query]]
+id = "Q005"
+text = "checkout process with payment"
+category = "workflow"
+difficulty = "hard"
+intent = "End-to-end checkout implementation from cart to payment"
+[[query.essential_symbols]]
+symbol = "CheckoutFlow"
+path = "frontend/web/components/checkout/CheckoutFlow.tsx"
+type = "component"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService::processOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "PaymentService::processPayment"
+path = "services/payment-service/src/payment_service.py"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "orderService::createOrder"
+path = "frontend/web/services/orderService.ts"
+type = "method"
+priority = "H2"
+category = "context"
+
+[[query.essential_symbols]]
+symbol = "calculateShippingCost"
+path = "frontend/web/utils/calculateShipping.js"
+type = "function"
+priority = "H2"
+category = "context"
+
+[[query.essential_symbols]]
+symbol = "order-flow.md"
+path = "docs/business/order-flow.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[[query]]
+id = "Q006"
+text = "order status tracking"
+category = "domain"
+difficulty = "easy"
+intent = "Understand order status enum and tracking display"
+[[query.essential_symbols]]
+symbol = "OrderStatus"
+path = "services/order-service/src/main/java/com/ecommerce/order/domain/OrderStatus.java"
+type = "enum"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderList"
+path = "frontend/web/components/order/OrderList.tsx"
+type = "component"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "Order"
+path = "services/order-service/src/main/java/com/ecommerce/order/domain/Order.java"
+type = "class"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "Order::canBeCancelled"
+path = "services/order-service/src/main/java/com/ecommerce/order/domain/Order.java"
+type = "method"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "order-flow.md"
+path = "docs/business/order-flow.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[[query]]
+id = "Q007"
+text = "price calculation with tier discount"
+category = "business_logic"
+difficulty = "medium"
+intent = "Understand complete pricing logic with discounts"
+[[query.essential_symbols]]
+symbol = "formatPrice"
+path = "frontend/web/utils/formatPrice.js"
+type = "function"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "Customer::getTierDiscount"
+path = "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/Customer.kt"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService::processOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "CustomerTier"
+path = "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/CustomerTier.kt"
+type = "enum"
+priority = "H2"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "pricing-policy.md"
+path = "docs/business/pricing-policy.md"
+type = "document"
+priority = "H1"
+category = "documentation"
+
+
+[[query]]
+id = "Q008"
+text = "shipping cost calculation logic"
+category = "algorithm"
+difficulty = "easy"
+intent = "Modify or understand shipping cost algorithm"
+[[query.essential_symbols]]
+symbol = "calculateShippingCost"
+path = "frontend/web/utils/calculateShipping.js"
+type = "function"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "Customer::getFreeShippingThreshold"
+path = "services/customer-service/src/main/kotlin/com/ecommerce/customer/domain/Customer.kt"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "calculateDistance"
+path = "frontend/web/utils/calculateShipping.js"
+type = "function"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "getFreeShippingThreshold"
+path = "frontend/web/utils/calculateShipping.js"
+type = "function"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "CheckoutFlow"
+path = "frontend/web/components/checkout/CheckoutFlow.tsx"
+type = "component"
+priority = "H2"
+category = "context"
+
+
+[[query]]
+id = "Q009"
+text = "complete order lifecycle from cart to delivery"
+category = "workflow"
+difficulty = "hard"
+intent = "End-to-end understanding of entire order flow"
+[[query.essential_symbols]]
+symbol = "Cart"
+path = "frontend/web/components/cart/Cart.tsx"
+type = "component"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderController"
+path = "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+type = "class"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderStatus"
+path = "services/order-service/src/main/java/com/ecommerce/order/domain/OrderStatus.java"
+type = "enum"
+priority = "H1"
+category = "domain_model"
+
+[[query.essential_symbols]]
+symbol = "CheckoutFlow"
+path = "frontend/web/components/checkout/CheckoutFlow.tsx"
+type = "component"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderService::processOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/service/OrderService.java"
+type = "method"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderController::createOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderList"
+path = "frontend/web/components/order/OrderList.tsx"
+type = "component"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "order-flow.md"
+path = "docs/business/order-flow.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[[query]]
+id = "Q010"
+text = "REST API endpoints and design"
+category = "architecture"
+difficulty = "medium"
+intent = "Understand API architecture and implementation"
+[[query.essential_symbols]]
+symbol = "OrderController"
+path = "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+type = "class"
+priority = "H1"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "api-design.md"
+path = "docs/architecture/api-design.md"
+type = "document"
+priority = "H1"
+category = "documentation"
+
+[[query.essential_symbols]]
+symbol = "OrderController::createOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "OrderController::getOrder"
+path = "services/order-service/src/main/java/com/ecommerce/order/controller/OrderController.java"
+type = "method"
+priority = "H2"
+category = "implementation"
+
+[[query.essential_symbols]]
+symbol = "orderService.ts"
+path = "frontend/web/services/orderService.ts"
+type = "file"
+priority = "H2"
+category = "context"
+
+[[query.essential_symbols]]
+symbol = "system-architecture.md"
+path = "docs/architecture/system-architecture.md"
+type = "document"
+priority = "H2"
+category = "documentation"
+
+
+[metadata]
+version = "2.0"
+created = "2025-11-12"
+description = "Utility-Based Ground Truth for E-commerce Sample - Version 2\n\nDesign Philosophy:\nBased on complete qualitative analysis of all source code and documentation,\nthis ground truth reflects what AI agents ACTUALLY need when working with code.\n\nCore Principles:\n1. Symbol-level precision (exact methods/classes, not just files)\n2. Actionability first (prioritize immediately executable code)\n3. Multiple valid answers (recognize alternatives)\n4. Essential coverage (implementation + domain + context)\n\nEvaluation Dimensions:\n- Essential Coverage: Does top-5 include all three categories?\n- Actionability: Average utility score (methods=10, classes=9, docs=6)\n- Precision: Found exact symbols mentioned?"
