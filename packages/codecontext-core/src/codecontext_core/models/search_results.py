@@ -193,7 +193,7 @@ class SearchQuery:
     """Filter results by programming language."""
 
     file_filter: Optional[str] = None
-    """Filter results by file path pattern."""
+    """Filter results by exact file path."""
 
     type_filter: Optional[str] = None
     """Filter results by type: 'code' or 'document'."""
