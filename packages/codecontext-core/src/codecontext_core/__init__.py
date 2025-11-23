@@ -37,7 +37,6 @@ from codecontext_core.models import (
     SearchQuery,
     SearchResult,
     SearchScoring,
-    SearchStrategy,
 )
 from codecontext_core.models.cast_chunk import CASTChunk
 from codecontext_core.tokenizer import IdentifierTokenizer, CodeTokenizer
@@ -90,7 +89,6 @@ __all__ = [
     "SearchResult",
     "CASTChunk",
     "SearchScoring",
-    "SearchStrategy",
     # Tokenizer
     "IdentifierTokenizer",
     "CodeTokenizer",

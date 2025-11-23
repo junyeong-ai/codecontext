@@ -1,37 +1,8 @@
 """Search result data models for hybrid search functionality."""
 
 from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
-
-
-class SearchStrategy(Enum):
-    """Search strategy used for retrieval."""
-
-    BM25 = "bm25"
-    """Keyword-based search using BM25 algorithm."""
-
-    BM25_ONLY = "bm25_only"
-    """Keyword-only search using BM25."""
-
-    VECTOR_CODE = "vector_code"
-    """Vector similarity search on code embeddings."""
-
-    VECTOR_DESC = "vector_desc"
-    """Vector similarity search on description embeddings."""
-
-    VECTOR_ONLY = "vector_only"
-    """Vector-only search (no BM25)."""
-
-    GRAPH = "graph"
-    """Graph-based relationship search."""
-
-    GRAPH_ENHANCED = "graph_enhanced"
-    """Graph-enhanced hybrid search."""
-
-    HYBRID = "hybrid"
-    """Combined multi-strategy search."""
 
 
 @dataclass
@@ -215,9 +186,6 @@ class SearchQuery:
     query_text: str
     """The search query text."""
 
-    strategy: SearchStrategy = SearchStrategy.HYBRID
-    """Search strategy to use."""
-
     limit: int = 10
     """Maximum number of results to return."""
 
@@ -246,3 +214,6 @@ class SearchQuery:
 
         if not 0.0 <= self.min_score <= 1.0:
             raise ValueError("min_score must be between 0.0 and 1.0")
+
+        if self.type_filter is not None and self.type_filter not in ("code", "document"):
+            raise ValueError(f"type_filter must be 'code' or 'document', got: {self.type_filter}")

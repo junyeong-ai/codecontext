@@ -53,10 +53,10 @@ def search(
         "-l",
         help="Filter by programming language",
     ),
-    file_pattern: str | None = typer.Option(
+    file_path: str | None = typer.Option(
         None,
-        "--file-pattern",
-        help="Filter by file pattern",
+        "--file",
+        help="Filter by exact file path",
     ),
     result_type: str | None = typer.Option(
         None,
@@ -87,10 +87,10 @@ def search(
     Search the indexed codebase.
 
     Examples:
-        codecontext search "OrderService"                           # All results
-        codecontext search "auth" --language python --type code     # Python code only
-        codecontext search "what are requirements" -i qa -t document # Documents only
-        codecontext search "getUserById" -i code2code               # Code similarity
+        codecontext search "OrderService"                             # All results
+        codecontext search "auth" --language python --type code       # Python code only
+        codecontext search "config" --file src/config.py              # Specific file
+        codecontext search "what are requirements" -i qa -t document  # Documents only
     """
     try:
         enable_logging = verbose
@@ -121,7 +121,7 @@ def search(
                 query_text=query,
                 limit=limit,
                 language_filter=language,
-                file_filter=file_pattern,
+                file_filter=file_path,
                 type_filter=result_type,
             )
 

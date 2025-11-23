@@ -125,6 +125,10 @@ class SearchRetriever:
         search_results = sorted(search_results, key=lambda r: r.score, reverse=True)
         search_results = self._apply_diversity_filter(search_results)
 
+        # Apply min_score filter if specified
+        if query.min_score > 0.0:
+            search_results = [r for r in search_results if r.score >= query.min_score]
+
         return search_results[:limit]
 
     def _apply_boosting(self, results: list[SearchResult], query: str) -> list[SearchResult]:

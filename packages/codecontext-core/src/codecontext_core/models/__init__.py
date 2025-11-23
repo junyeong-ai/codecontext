@@ -17,7 +17,6 @@ from codecontext_core.models.search_results import (
     SearchResult,
     SearchQuery,
     SearchScoring,
-    SearchStrategy,
 )
 
 __all__ = [
@@ -38,5 +37,4 @@ __all__ = [
     "SearchQuery",
     "SearchResult",
     "SearchScoring",
-    "SearchStrategy",
 ]
