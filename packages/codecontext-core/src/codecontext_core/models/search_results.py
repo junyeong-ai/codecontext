@@ -227,6 +227,9 @@ class SearchQuery:
     file_filter: Optional[str] = None
     """Filter results by file path pattern."""
 
+    type_filter: Optional[str] = None
+    """Filter results by type: 'code' or 'document'."""
+
     min_score: float = 0.0
     """Minimum score threshold for results."""
 

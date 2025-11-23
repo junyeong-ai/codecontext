@@ -58,6 +58,12 @@ def search(
         "--file-pattern",
         help="Filter by file pattern",
     ),
+    result_type: str | None = typer.Option(
+        None,
+        "--type",
+        "-t",
+        help="Filter by result type: code, document",
+    ),
     expand: str | None = typer.Option(
         None,
         "--expand",
@@ -81,9 +87,10 @@ def search(
     Search the indexed codebase.
 
     Examples:
-        codecontext search "OrderService"                    # Code search
-        codecontext search "what are requirements" -i qa     # Doc search
-        codecontext search "getUserById" -i code2code        # Code similarity
+        codecontext search "OrderService"                           # All results
+        codecontext search "auth" --language python --type code     # Python code only
+        codecontext search "what are requirements" -i qa -t document # Documents only
+        codecontext search "getUserById" -i code2code               # Code similarity
     """
     try:
         enable_logging = verbose
@@ -99,13 +106,6 @@ def search(
             assert ctx.embedding_provider is not None, "Embedding provider required"
             embedding_provider = ctx.embedding_provider
 
-            SearchQuery(
-                query_text=query,
-                limit=limit,
-                language_filter=language,
-                file_filter=file_pattern,
-            )
-
             from codecontext_core.interfaces import InstructionType
 
             instruction_map = {
@@ -117,8 +117,16 @@ def search(
                 instruction or "nl2code", InstructionType.NL2CODE_QUERY
             )
 
+            search_query = SearchQuery(
+                query_text=query,
+                limit=limit,
+                language_filter=language,
+                file_filter=file_pattern,
+                type_filter=result_type,
+            )
+
             retriever = SearchRetriever(ctx.storage, embedding_provider, ctx.config.search)
-            results = retriever.search(query, limit, instruction_type=instruction_type)
+            results = retriever.search(search_query, instruction_type=instruction_type)
 
             expand_fields: set[str] | None = None
             if expand:

@@ -5,7 +5,7 @@ from typing import Any
 
 from codecontext_core import VectorStore
 from codecontext_core.interfaces import EmbeddingProvider, InstructionType
-from codecontext_core.models import SearchResult, SearchScoring
+from codecontext_core.models import SearchQuery, SearchResult, SearchScoring
 from codecontext_core.tokenizer import CodeTokenizer
 
 from codecontext.config.schema import SearchConfig
@@ -28,18 +28,23 @@ class SearchRetriever:
 
     def search(
         self,
-        query: str,
-        limit: int | None = None,
+        query: SearchQuery,
         instruction_type: InstructionType = InstructionType.NL2CODE_QUERY,
     ) -> list[SearchResult]:
-        limit = limit or self.config.default_limit
+        limit = query.limit or self.config.default_limit
 
-        query_embedding = self.embedding_provider.embed_text(
-            query, instruction_type=instruction_type
+        # Use pre-computed embedding or generate new one
+        query_embedding = query.query_embedding or self.embedding_provider.embed_text(
+            query.query_text, instruction_type=instruction_type
         )
 
         results = self.storage._search_hybrid(  # type: ignore[attr-defined]
-            query_embedding=query_embedding, query_text=query, limit=limit * 3, type_filter=None
+            query_embedding=query_embedding,
+            query_text=query.query_text,
+            limit=limit * 3,
+            type_filter=query.type_filter,
+            language_filter=query.language_filter,
+            file_filter=query.file_filter,
         )
 
         search_results = []
@@ -116,7 +121,7 @@ class SearchRetriever:
         if self.graph_expander:
             search_results = self.graph_expander.expand_results(search_results)
 
-        search_results = self._apply_boosting(search_results, query)
+        search_results = self._apply_boosting(search_results, query.query_text)
         search_results = sorted(search_results, key=lambda r: r.score, reverse=True)
         search_results = self._apply_diversity_filter(search_results)
 
