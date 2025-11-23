@@ -462,7 +462,9 @@ class IndexState:
         """Create IndexState from metadata dict."""
         return cls(
             project_id=metadata["project_id"],
-            project_name=metadata.get("project_name", metadata["project_id"]),  # Backward compatible
+            project_name=metadata.get(
+                "project_name", metadata["project_id"]
+            ),  # Backward compatible
             repository_path=metadata["repository_path"],
             last_commit_hash=metadata["last_commit_hash"],
             last_indexed_at=datetime.fromisoformat(metadata["last_indexed_at"]),
