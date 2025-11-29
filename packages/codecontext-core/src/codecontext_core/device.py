@@ -172,12 +172,10 @@ class CUDAStrategy(DeviceStrategy):
 
 
 class MPSStrategy(DeviceStrategy):
-    """MPS strategy."""
+    """MPS strategy for Apple Silicon."""
 
     def setup(self) -> None:
-        import os
-
-        os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = str(self.config.memory_fraction)
+        pass  # MPS env vars must be set before PyTorch import (see cli.py)
 
     def cleanup_memory(self) -> None:
         import gc

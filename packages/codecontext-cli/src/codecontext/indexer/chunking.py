@@ -55,7 +55,6 @@ class MemoryManager:
 
         if force or mem_config.force_gc_after_chunk:
             gc.collect()
-            gc.collect()
 
         if mem_config.clear_gpu_cache:
             cleanup_all_devices()

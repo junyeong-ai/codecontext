@@ -1,6 +1,13 @@
 """CodeContext CLI - Intelligent Code Search Engine."""
 
+import os
 import warnings
+
+# MPS memory configuration - must be set before PyTorch import
+# HIGH_WATERMARK: max memory ratio (0.0 = unlimited, default behavior varies)
+# LOW_WATERMARK: cleanup threshold (must be <= HIGH)
+if "PYTORCH_MPS_HIGH_WATERMARK_RATIO" not in os.environ:
+    os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"  # Disable limit for stability
 
 # Suppress known NumPy float32 subnormal warnings (NumPy internal issue)
 warnings.filterwarnings("ignore", message=".*smallest subnormal.*", category=UserWarning)
