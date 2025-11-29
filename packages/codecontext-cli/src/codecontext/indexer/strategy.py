@@ -441,19 +441,7 @@ class AsyncIndexStrategy:
     async def _embed(
         self, objects: list[CodeObject], show_progress: bool = True
     ) -> list[CodeObject]:
-        """Generate embeddings with instruction prefixes.
-
-        Applies appropriate instruction types:
-        - Code content: NL2CODE_PASSAGE
-        - Docstrings: QA_PASSAGE
-
-        Args:
-            objects: Code objects
-            show_progress: Show progress
-
-        Returns:
-            Objects with embeddings
-        """
+        """Generate embeddings for all code objects using NL2CODE_PASSAGE instruction."""
         if not objects:
             return []
 
@@ -461,62 +449,22 @@ class AsyncIndexStrategy:
 
         batch_size = self.embedding_provider.get_batch_size()
         progress = SimpleProgress(total=len(objects), desc="Embeddings") if show_progress else None
+        instruction = self.config.embeddings.huggingface.instructions.nl2code_passage
 
-        # Separate objects by embedding type
-        code_objects = [obj for obj in objects if not obj.docstring]
-        docstring_objects = [obj for obj in objects if obj.docstring]
+        async def batch_generator() -> AsyncGenerator[list[str], None]:
+            for i in range(0, len(objects), batch_size):
+                batch = objects[i : i + batch_size]
+                yield [instruction + obj.content for obj in batch]
 
-        # Embed code content (primary content for all objects)
-        if code_objects:
-
-            async def code_batch_generator() -> AsyncGenerator[list[str], None]:
-                for i in range(0, len(code_objects), batch_size):
-                    batch = code_objects[i : i + batch_size]
-                    texts = []
-                    for obj in batch:
-                        instruction = (
-                            self.config.embeddings.huggingface.instructions.nl2code_passage
-                        )
-                        texts.append(instruction + obj.content)
-                    yield texts
-
-            batch_index = 0
-            async for embeddings in self.embedding_provider.embed_stream(
-                code_batch_generator(), progress=progress
-            ):
-                start_idx = batch_index * batch_size
-                end_idx = min(start_idx + batch_size, len(code_objects))
-
-                for i, embedding in enumerate(embeddings):
-                    if start_idx + i < end_idx:
-                        code_objects[start_idx + i].embedding = embedding
-
-                batch_index += 1
-
-        # Embed docstrings separately (QA task)
-        if docstring_objects:
-
-            async def docstring_batch_generator() -> AsyncGenerator[list[str], None]:
-                for i in range(0, len(docstring_objects), batch_size):
-                    batch = docstring_objects[i : i + batch_size]
-                    texts = []
-                    for obj in batch:
-                        instruction = self.config.embeddings.huggingface.instructions.qa_passage
-                        texts.append(instruction + (obj.docstring or ""))
-                    yield texts
-
-            batch_index = 0
-            async for embeddings in self.embedding_provider.embed_stream(
-                docstring_batch_generator(), progress=progress
-            ):
-                start_idx = batch_index * batch_size
-                end_idx = min(start_idx + batch_size, len(docstring_objects))
-
-                for i, embedding in enumerate(embeddings):
-                    if start_idx + i < end_idx:
-                        docstring_objects[start_idx + i].embedding = embedding
-
-                batch_index += 1
+        batch_index = 0
+        async for embeddings in self.embedding_provider.embed_stream(
+            batch_generator(), progress=progress
+        ):
+            start_idx = batch_index * batch_size
+            for i, embedding in enumerate(embeddings):
+                if start_idx + i < len(objects):
+                    objects[start_idx + i].embedding = embedding
+            batch_index += 1
 
         return objects
 
