@@ -15,7 +15,6 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from uuid import UUID, uuid4
-from typing import Optional
 
 
 class PaymentStatus(Enum):
@@ -53,11 +52,11 @@ class Payment:
     order_id: UUID
     amount: Decimal
     payment_method: str
-    transaction_id: Optional[str] = None
+    transaction_id: str | None = None
     status: PaymentStatus = PaymentStatus.PENDING
-    error_message: Optional[str] = None
-    refund_transaction_id: Optional[str] = None
-    refund_reason: Optional[str] = None
+    error_message: str | None = None
+    refund_transaction_id: str | None = None
+    refund_reason: str | None = None
     created_at: datetime = None
     updated_at: datetime = None
 

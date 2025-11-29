@@ -11,7 +11,6 @@ Referenced by:
 from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
-from typing import Optional
 
 
 @dataclass
@@ -52,9 +51,9 @@ class Product:
     description: str
     price: Decimal
     category: str
-    brand: Optional[str] = None
-    image_url: Optional[str] = None
-    dimensions: Optional[Dimensions] = None
+    brand: str | None = None
+    image_url: str | None = None
+    dimensions: Dimensions | None = None
     is_active: bool = True
 
     def formatted_price(self) -> str:
