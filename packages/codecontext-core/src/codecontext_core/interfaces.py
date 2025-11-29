@@ -7,11 +7,7 @@ from uuid import UUID
 
 
 class InstructionType(StrEnum):
-    """Instruction types for code embeddings.
-
-    Based on Jina Code Embeddings instruction framework.
-    Enables task-specific and asymmetric query/passage encoding.
-    """
+    """Jina Code Embeddings instruction types for asymmetric query/passage encoding."""
 
     NL2CODE_QUERY = "nl2code_query"
     NL2CODE_PASSAGE = "nl2code_passage"
@@ -19,7 +15,6 @@ class InstructionType(StrEnum):
     CODE2CODE_PASSAGE = "code2code_passage"
     QA_QUERY = "qa_query"
     QA_PASSAGE = "qa_passage"
-    DOCUMENT_PASSAGE = "document_passage"
 
 
 class StreamProgress(Protocol):

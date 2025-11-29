@@ -7,44 +7,22 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class InstructionConfig(BaseModel):
-    """Instruction-based embedding configuration.
+    """Jina Code Embeddings instruction configuration.
 
-    Based on Jina Code Embeddings official instruction framework.
-    Enables asymmetric query/passage encoding and task-specific prompts.
+    Provides asymmetric query/passage encoding for different search tasks.
+    See: https://huggingface.co/jinaai/jina-code-embeddings-0.5b
     """
 
-    enabled: bool = Field(default=True, description="Enable instruction-based embeddings")
-
     nl2code_query: str = Field(
-        default="Find the most relevant code snippet given the following query:\n",
-        description="Instruction prefix for natural language to code queries",
+        default="Find the most relevant code snippet given the following query:\n"
     )
-    nl2code_passage: str = Field(
-        default="Candidate code snippet:\n",
-        description="Instruction prefix for code passages",
-    )
-
+    nl2code_passage: str = Field(default="Candidate code snippet:\n")
     code2code_query: str = Field(
-        default="Find an equivalent code snippet given the following code snippet:\n",
-        description="Instruction prefix for code similarity queries",
+        default="Find an equivalent code snippet given the following code snippet:\n"
     )
-    code2code_passage: str = Field(
-        default="Candidate code snippet:\n",
-        description="Instruction prefix for code similarity passages",
-    )
-
-    qa_query: str = Field(
-        default="Find the most relevant answer given the following question:\n",
-        description="Instruction prefix for QA queries",
-    )
-    qa_passage: str = Field(
-        default="Candidate answer:\n", description="Instruction prefix for answers/docstrings"
-    )
-
-    document_passage: str = Field(
-        default="Candidate documentation:\n",
-        description="Instruction prefix for documentation passages",
-    )
+    code2code_passage: str = Field(default="Candidate code snippet:\n")
+    qa_query: str = Field(default="Find the most relevant answer given the following question:\n")
+    qa_passage: str = Field(default="Candidate answer:\n")
 
 
 class HuggingFaceConfig(BaseModel):
