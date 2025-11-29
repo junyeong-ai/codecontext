@@ -62,6 +62,7 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.config.model_name, cache_dir=self.config.cache_dir, trust_remote_code=True
             )
+            self.tokenizer.padding_side = "left"
 
         self._load_model()
 
@@ -133,44 +134,21 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
         except Exception as e:
             logger.error(f"Failed to load LoRA adapter from {adapter_path}: {e}")
             logger.warning("Continuing with base model only")
-            # Don't raise - graceful degradation
 
-    def _unload_model(self) -> None:
-        if self.model:
-            del self.model
-            self.model = None
-
-        gc.collect()
-        if not self.device_strategy:
-            return
-
-        device = self.device_strategy.get_device_name()
-
-        if device == "cuda" and torch.cuda.is_available():
-            torch.cuda.synchronize()
-            torch.cuda.empty_cache()
-        elif device == "mps" and hasattr(torch.mps, "empty_cache"):
-            torch.mps.synchronize()
-            torch.mps.empty_cache()
-
-    def _mean_pooling(self, output: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-        tokens = output[0]
-        mask_expanded = mask.unsqueeze(-1).expand(tokens.size()).float()
-        return torch.sum(tokens * mask_expanded, 1) / torch.clamp(mask_expanded.sum(1), min=1e-9)
+    def _last_token_pooling(
+        self, last_hidden_states: torch.Tensor, attention_mask: torch.Tensor
+    ) -> torch.Tensor:
+        left_padding = attention_mask[:, -1].sum() == attention_mask.shape[0]
+        if left_padding:
+            return last_hidden_states[:, -1]
+        sequence_lengths = attention_mask.sum(dim=1) - 1
+        batch_size = last_hidden_states.shape[0]
+        return last_hidden_states[
+            torch.arange(batch_size, device=last_hidden_states.device), sequence_lengths
+        ]
 
     def _apply_instruction(self, text: str, instruction_type: InstructionType) -> str:
-        """Apply instruction prefix based on type.
-
-        Args:
-            text: Text to embed
-            instruction_type: Type of instruction to apply
-
-        Returns:
-            Text with instruction prefix (or original if disabled)
-        """
-        if not self.config.instructions.enabled:
-            return text
-
+        """Apply instruction prefix based on type."""
         instruction_map = {
             InstructionType.NL2CODE_QUERY: self.config.instructions.nl2code_query,
             InstructionType.NL2CODE_PASSAGE: self.config.instructions.nl2code_passage,
@@ -178,11 +156,8 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
             InstructionType.CODE2CODE_PASSAGE: self.config.instructions.code2code_passage,
             InstructionType.QA_QUERY: self.config.instructions.qa_query,
             InstructionType.QA_PASSAGE: self.config.instructions.qa_passage,
-            InstructionType.DOCUMENT_PASSAGE: self.config.instructions.document_passage,
         }
-
-        instruction = instruction_map.get(instruction_type, "")
-        return instruction + text
+        return instruction_map.get(instruction_type, "") + text
 
     def embed_text(
         self, text: str, instruction_type: InstructionType = InstructionType.NL2CODE_QUERY
@@ -228,10 +203,10 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
                 if self.config.use_fp16 and device != "cpu":
                     with torch.autocast(device_type=device, dtype=torch.float16):
                         output = self.model(input_ids=ids, attention_mask=mask)
-                        pooled = self._mean_pooling(output, mask)
+                        pooled = self._last_token_pooling(output.last_hidden_state, mask)
                 else:
                     output = self.model(input_ids=ids, attention_mask=mask)
-                    pooled = self._mean_pooling(output, mask)
+                    pooled = self._last_token_pooling(output.last_hidden_state, mask)
 
                 if self.config.normalize_embeddings:
                     pooled = torch.nn.functional.normalize(pooled, p=2, dim=1)
@@ -254,10 +229,6 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
         *,
         progress: object = None,
     ) -> AsyncGenerator[list[list[float]], None]:
-        import logging
-
-        logging.getLogger(__name__)
-
         await self.initialize()
 
         batch_idx = 0
