@@ -94,8 +94,11 @@ def initialize_command(
         ...     need_embedding=True
         ... )
     """
-    # Load configuration
-    settings = get_settings()
+    # Load configuration with project path for .codecontext.toml discovery
+    from codecontext.config.settings import reset_settings
+
+    reset_settings()  # Ensure fresh settings for each command
+    settings = get_settings(project_path=path)
     config = settings.load()
 
     # Setup logging (can be disabled for JSON output)

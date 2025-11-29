@@ -23,8 +23,15 @@ def get_data_dir() -> Path:
     return get_config_dir() / "data"
 
 
-def get_project_config_path() -> Path | None:
-    current = Path.cwd()
+def get_project_config_path(base_path: Path | None = None) -> Path | None:
+    """Find .codecontext.toml in project hierarchy.
+
+    Args:
+        base_path: Starting path for search (defaults to cwd)
+    """
+    current = base_path or Path.cwd()
+    if not current.is_absolute():
+        current = current.resolve()
     for parent in [current, *current.parents]:
         candidate = parent / ".codecontext.toml"
         if candidate.exists():
@@ -77,8 +84,13 @@ def load_from_env() -> dict[str, Any]:
 class Settings:
     """Configuration loader with priority: CLI > ENV > Project > Global > Defaults."""
 
-    def __init__(self, cli_overrides: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        cli_overrides: dict[str, Any] | None = None,
+        project_path: Path | None = None,
+    ) -> None:
         self.cli_overrides = cli_overrides or {}
+        self.project_path = project_path
         self._config: Config | None = None
 
     def load(self) -> Config:
@@ -100,9 +112,9 @@ class Settings:
                 env_file_config = load_toml(env_config_file)
                 config_dict = deep_merge(config_dict, env_file_config)
 
-        # 3. Project config (.codecontext.toml)
-        if project_path := get_project_config_path():
-            project_config = load_toml(project_path)
+        # 3. Project config (.codecontext.toml) - use project_path if provided
+        if project_config_path := get_project_config_path(self.project_path):
+            project_config = load_toml(project_config_path)
             config_dict = deep_merge(config_dict, project_config)
 
         # 4. Environment variables
@@ -129,8 +141,17 @@ class Settings:
 _settings: Settings | None = None
 
 
-def get_settings(cli_overrides: dict[str, Any] | None = None) -> Settings:
+def get_settings(
+    cli_overrides: dict[str, Any] | None = None,
+    project_path: Path | None = None,
+) -> Settings:
     global _settings
     if not _settings:
-        _settings = Settings(cli_overrides)
+        _settings = Settings(cli_overrides, project_path)
     return _settings
+
+
+def reset_settings() -> None:
+    """Reset cached settings (for testing)."""
+    global _settings
+    _settings = None
