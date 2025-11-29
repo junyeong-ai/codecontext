@@ -102,11 +102,12 @@ Used in graph expansion (1-hop PPR, threshold 0.4).
 
 ## Instruction-Based Embeddings
 
-**File:** `codecontext_core/interfaces.py:9-22`
+**File:** `codecontext_core/interfaces.py:9-17`
 
-7 types: NL2CODE_QUERY/PASSAGE, CODE2CODE_QUERY/PASSAGE, QA_QUERY/PASSAGE, DOCUMENT_PASSAGE
+6 types: NL2CODE_QUERY/PASSAGE, CODE2CODE_QUERY/PASSAGE, QA_QUERY/PASSAGE
 
-Enables asymmetric semantic matching.
+Enables asymmetric query/passage encoding (Jina Code Embeddings).
+Pooling: last-token | Padding: left
 
 ---
 
