@@ -29,7 +29,6 @@ class TestInstructionTypeExport:
         assert InstructionType.CODE2CODE_PASSAGE
         assert InstructionType.QA_QUERY
         assert InstructionType.QA_PASSAGE
-        assert InstructionType.DOCUMENT_PASSAGE
 
     def test_string_enum_behavior(self):
         """InstructionType should behave as string enum."""
@@ -45,6 +44,6 @@ class TestInstructionTypeExport:
         """Should be able to iterate over all instruction types."""
         all_types = list(InstructionType)
 
-        assert len(all_types) == 7
+        assert len(all_types) == 6
         assert InstructionType.NL2CODE_QUERY in all_types
-        assert InstructionType.DOCUMENT_PASSAGE in all_types
+        assert InstructionType.QA_PASSAGE in all_types
