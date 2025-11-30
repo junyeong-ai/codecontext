@@ -9,6 +9,14 @@ if TYPE_CHECKING:
     from codecontext_core import VectorStore
 
 
+def _add_rel(output: dict[str, dict[str, Any]], key: str, name: str, location: str) -> None:
+    """Add a relationship item to the output dictionary."""
+    if key not in output:
+        output[key] = {"items": [], "total_count": 0}
+    output[key]["items"].append({"name": name, "location": location})
+    output[key]["total_count"] += 1
+
+
 class BaseFormatter(ABC):
     """Abstract base class for all formatters."""
 
@@ -37,58 +45,59 @@ class BaseFormatter(ABC):
 
 
 def extract_relationships(result: SearchResult, storage: "VectorStore | None") -> dict[str, Any]:
-    """Extract relationship data (callers, callees, contains, contained_by) from storage."""
-    empty_result: dict[str, Any] = {
-        "callers": {"items": [], "total_count": 0},
-        "callees": {"items": [], "total_count": 0},
-        "contains": {"items": [], "total_count": 0},
-        "contained_by": {"items": [], "total_count": 0},
-        "similar": {"items": [], "total_count": 0},
-    }
-
+    """Extract all relationship types from storage."""
     if storage is None:
-        return empty_result
+        return {}
 
     result_id = result.chunk_id
     rels = storage.get_relationships(result_id)
+    if not rels:
+        return {}
 
-    callers: list[dict[str, Any]] = []
-    callees: list[dict[str, Any]] = []
-    contains: list[dict[str, Any]] = []
-    contained_by: list[dict[str, Any]] = []
+    output: dict[str, dict[str, Any]] = {}
 
     for rel in rels:
-        if rel.relation_type == RelationType.CALLS:
-            if rel.target_id == result_id:
-                callers.append(
-                    {
-                        "name": rel.source_type,
-                        "location": rel.source_id,
-                        "type": "direct_call",
-                    }
-                )
-            elif rel.source_id == result_id:
-                callees.append(
-                    {
-                        "name": rel.target_type,
-                        "location": rel.target_id,
-                        "external": False,
-                    }
-                )
+        rel_type = rel.relation_type
+        is_source = rel.source_id == result_id
+        is_target = rel.target_id == result_id
 
-        elif rel.relation_type == RelationType.CONTAINS:
-            if rel.source_id == result_id:
-                contains.append({"name": rel.target_type, "location": rel.target_id})
-            elif rel.target_id == result_id:
-                contained_by.append({"name": rel.source_type, "location": rel.source_id})
+        if rel_type == RelationType.CALLS:
+            if is_target:
+                _add_rel(output, "callers", rel.source_type, rel.source_id)
+            elif is_source:
+                _add_rel(output, "callees", rel.target_type, rel.target_id)
 
-    return {
-        "callers": {"items": callers, "total_count": len(callers)},
-        "callees": {"items": callees, "total_count": len(callees)},
-        "contains": {"items": contains, "total_count": len(contains)},
-        "contained_by": {"items": contained_by, "total_count": len(contained_by)},
-        "similar": {"items": [], "total_count": 0},
-    }
+        elif rel_type == RelationType.CONTAINS:
+            if is_source:
+                _add_rel(output, "contains", rel.target_type, rel.target_id)
+            elif is_target:
+                _add_rel(output, "contained_by", rel.source_type, rel.source_id)
+
+        elif rel_type == RelationType.EXTENDS:
+            if is_source:
+                _add_rel(output, "extends", rel.target_type, rel.target_id)
+            elif is_target:
+                _add_rel(output, "extended_by", rel.source_type, rel.source_id)
+
+        elif rel_type == RelationType.IMPLEMENTS:
+            if is_source:
+                _add_rel(output, "implements", rel.target_type, rel.target_id)
+            elif is_target:
+                _add_rel(output, "implemented_by", rel.source_type, rel.source_id)
+
+        elif rel_type == RelationType.REFERENCES:
+            if is_source:
+                _add_rel(output, "references", rel.target_type, rel.target_id)
+            elif is_target:
+                _add_rel(output, "referenced_by", rel.source_type, rel.source_id)
+
+        elif rel_type == RelationType.IMPORTS:
+            if is_source:
+                _add_rel(output, "imports", rel.target_type, rel.target_id)
+            elif is_target:
+                _add_rel(output, "imported_by", rel.source_type, rel.source_id)
+
+    return output
 
 
 def calculate_direct_callers(result: SearchResult, storage: "VectorStore | None") -> dict[str, Any]:

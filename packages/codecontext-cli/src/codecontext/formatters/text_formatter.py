@@ -138,20 +138,14 @@ class TextFormatter(BaseFormatter):
             relationships = extract_relationships(result, storage)
 
             rel_lines = []
-            for rel_type, rel_data in [
-                ("Callers", relationships.get("callers", {})),
-                ("Callees", relationships.get("callees", {})),
-                ("Contains", relationships.get("contains", {})),
-            ]:
-                items = rel_data.get("items", [])
-                total = rel_data.get("total_count", 0)
-
+            for key, data in relationships.items():
+                items = data.get("items", [])
+                total = data.get("total_count", 0)
                 if items:
+                    label = key.replace("_", " ").title()
                     names = [item.get("name", "") for item in items[:3]]
-                    if total > 3:
-                        rel_lines.append(f"   • {rel_type} ({total}): {', '.join(names)}, ...")
-                    else:
-                        rel_lines.append(f"   • {rel_type} ({total}): {', '.join(names)}")
+                    suffix = ", ..." if total > 3 else ""
+                    rel_lines.append(f"   • {label} ({total}): {', '.join(names)}{suffix}")
 
             if rel_lines:
                 lines.append("")

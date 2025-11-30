@@ -133,15 +133,8 @@ class JSONFormatter(BaseFormatter):
         # Add relationships
         if (expand_all or "relationships" in expand_fields) and storage:
             relationships = extract_relationships(result, storage)
-
-            # Filter out empty relationships
-            filtered_rels = {}
-            for key in ["callers", "callees", "contains"]:
-                if relationships.get(key, {}).get("items"):
-                    filtered_rels[key] = relationships[key]
-
-            if filtered_rels:
-                expanded["relationships"] = filtered_rels
+            if relationships:
+                expanded["relationships"] = relationships
 
         # Add impact
         if (expand_all or "impact" in expand_fields) and storage:
