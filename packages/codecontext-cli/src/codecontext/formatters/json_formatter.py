@@ -1,5 +1,3 @@
-"""JSON output formatter for search results."""
-
 import json
 from typing import TYPE_CHECKING, Any
 
@@ -17,8 +15,6 @@ if TYPE_CHECKING:
 
 
 class JSONFormatter(BaseFormatter):
-    """Format search results as JSON."""
-
     def format(
         self,
         results: list[SearchResult],
@@ -27,37 +23,20 @@ class JSONFormatter(BaseFormatter):
         include_scoring: bool = False,
         expand_fields: set[str] | None = None,
     ) -> str:
-        """Format results as JSON.
+        formatted = [
+            self._format_expanded(result, storage, expand_fields)
+            if expand_fields
+            else self._format_minimal(result)
+            for result in results
+        ]
 
-        Args:
-            results: Search results to format
-            query: Original search query
-            storage: Storage provider for relationships
-            include_scoring: Legacy parameter (ignored)
-            expand_fields: Fields to expand (signature, content, relationships, complexity, impact, all)
-        """
-        formatted = []
-
-        for result in results:
-            if expand_fields:
-                formatted_result = self._format_expanded(result, storage, expand_fields)
-            else:
-                formatted_result = self._format_minimal(result)
-
-            formatted.append(formatted_result)
-
-        output = {"results": formatted, "total": len(results), "query": query}
-        return json.dumps(output, indent=2)
+        return json.dumps({"results": formatted, "total": len(results), "query": query}, indent=2)
 
     def _format_minimal(self, result: SearchResult) -> dict[str, Any]:
-        """Minimal fields: name, type, file, lines, language, score."""
-        # Use relative_path if available, otherwise file_path
         file_path = result.metadata.get("relative_path") or str(result.file_path)
-
-        # For documents, prefer node_type (markdown, config) over object_type (document)
         obj_type = result.metadata.get("node_type") or result.metadata.get("object_type", "")
 
-        minimal = {
+        minimal: dict[str, Any] = {
             "name": result.metadata.get("name", ""),
             "type": obj_type,
             "file": file_path,
@@ -71,12 +50,10 @@ class JSONFormatter(BaseFormatter):
             if start_line and end_line and start_line != 0 and end_line != 0:
                 minimal["lines"] = f"{start_line}-{end_line}"
 
-        # Add language if available
         language = result.metadata.get("language", "")
         if language:
             minimal["language"] = language
 
-        # Add score (rounded)
         if result.score:
             minimal["score"] = round(result.score, 2)
 
@@ -88,36 +65,27 @@ class JSONFormatter(BaseFormatter):
         storage: "VectorStore | None",
         expand_fields: set[str],
     ) -> dict[str, Any]:
-        """Add fields: signature, snippet, content, relationships, complexity, impact, all."""
-        # Start with minimal fields
         expanded = self._format_minimal(result)
-
-        # Expand all fields if 'all' is specified
         expand_all = "all" in expand_fields
 
-        # Add signature
         if expand_all or "signature" in expand_fields:
             signature = result.metadata.get("signature", "")
             if signature and signature != expanded["name"]:
                 expanded["signature"] = signature
 
-        # Add snippet
         if expand_all or "snippet" in expand_fields:
             snippet = extract_essential_snippet(result.content or "")
             if snippet:
                 expanded["snippet"] = snippet[0] if len(snippet) == 1 else snippet
 
-        # Add content
         if expand_all or "content" in expand_fields:
             if result.content:
                 expanded["content"] = result.content
 
-        # Add parent if exists
         parent = result.metadata.get("parent_id")
         if parent:
             expanded["parent"] = parent
 
-        # Add complexity
         if expand_all or "complexity" in expand_fields:
             ast_metadata = result.metadata.get("ast_metadata", {})
             complexity = ast_metadata.get("complexity", {})
@@ -125,18 +93,13 @@ class JSONFormatter(BaseFormatter):
             lines = complexity.get("lines", 0)
 
             if cyclomatic > 1 or lines > 0:
-                expanded["complexity"] = {
-                    "cyclomatic": cyclomatic,
-                    "lines": lines,
-                }
+                expanded["complexity"] = {"cyclomatic": cyclomatic, "lines": lines}
 
-        # Add relationships
         if (expand_all or "relationships" in expand_fields) and storage:
             relationships = extract_relationships(result, storage)
             if relationships:
                 expanded["relationships"] = relationships
 
-        # Add impact
         if (expand_all or "impact" in expand_fields) and storage:
             impact = calculate_direct_callers(result, storage)
             if impact.get("direct_callers", 0) > 0:

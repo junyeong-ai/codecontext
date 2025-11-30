@@ -381,11 +381,16 @@ class AsyncIndexStrategy:
                 relationships.append(
                     Relationship(
                         source_id=source_obj.deterministic_id,
+                        source_name=source_obj.name,
                         source_type=source_obj.object_type.value,
+                        source_file=source_obj.relative_path,
+                        source_line=source_obj.start_line,
                         target_id=target_obj.deterministic_id,
+                        target_name=target_obj.name,
                         target_type=target_obj.object_type.value,
+                        target_file=target_obj.relative_path,
+                        target_line=target_obj.start_line,
                         relation_type=RelationType.IMPORTS,
-                        confidence=0.8,
                     )
                 )
 
