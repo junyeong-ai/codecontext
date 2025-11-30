@@ -162,9 +162,9 @@ class TestFullSyncWorkflow:
         critical_extensions = {".kts", ".jsx", ".tsx", ".mjs", ".cjs", ".mts", ".cts", ".pyw"}
         found_critical = critical_extensions & discovered_extensions
 
-        assert len(found_critical) == len(critical_extensions), (
-            f"Missing critical extensions: {critical_extensions - found_critical}"
-        )
+        assert len(found_critical) == len(
+            critical_extensions
+        ), f"Missing critical extensions: {critical_extensions - found_critical}"
 
     def test_skips_large_files(self, mock_config, mock_embedding_provider, mock_storage, tmp_path):
         """Should skip files exceeding max size limit."""

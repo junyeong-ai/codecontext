@@ -41,24 +41,24 @@ def assert_relationship(
         assert rel.target_id == target_id, f"Expected target_id {target_id}, got {rel.target_id}"
 
     if relation_type is not None:
-        assert rel.relation_type == relation_type, (
-            f"Expected relation_type {relation_type}, got {rel.relation_type}"
-        )
+        assert (
+            rel.relation_type == relation_type
+        ), f"Expected relation_type {relation_type}, got {rel.relation_type}"
 
     if confidence is not None:
-        assert rel.confidence == confidence, (
-            f"Expected confidence {confidence}, got {rel.confidence}"
-        )
+        assert (
+            rel.confidence == confidence
+        ), f"Expected confidence {confidence}, got {rel.confidence}"
 
     if source_type is not None:
-        assert rel.source_type == source_type, (
-            f"Expected source_type {source_type}, got {rel.source_type}"
-        )
+        assert (
+            rel.source_type == source_type
+        ), f"Expected source_type {source_type}, got {rel.source_type}"
 
     if target_type is not None:
-        assert rel.target_type == target_type, (
-            f"Expected target_type {target_type}, got {rel.target_type}"
-        )
+        assert (
+            rel.target_type == target_type
+        ), f"Expected target_type {target_type}, got {rel.target_type}"
 
 
 def assert_contains_relationship(
@@ -175,9 +175,9 @@ def assert_code_object(
         assert obj.name == name, f"Expected name {name}, got {obj.name}"
 
     if object_type is not None:
-        assert obj.object_type == object_type, (
-            f"Expected object_type {object_type}, got {obj.object_type}"
-        )
+        assert (
+            obj.object_type == object_type
+        ), f"Expected object_type {object_type}, got {obj.object_type}"
 
     if parent_id is not None:
         assert obj.parent_id == parent_id, f"Expected parent_id {parent_id}, got {obj.parent_id}"
@@ -210,14 +210,14 @@ def assert_relationship_count(
     if relation_type is not None:
         filtered = [r for r in relationships if r.relation_type == relation_type]
         actual_count = len(filtered)
-        assert actual_count == expected_count, (
-            f"Expected {expected_count} {relation_type} relationships, got {actual_count}"
-        )
+        assert (
+            actual_count == expected_count
+        ), f"Expected {expected_count} {relation_type} relationships, got {actual_count}"
     else:
         actual_count = len(relationships)
-        assert actual_count == expected_count, (
-            f"Expected {expected_count} relationships, got {actual_count}"
-        )
+        assert (
+            actual_count == expected_count
+        ), f"Expected {expected_count} relationships, got {actual_count}"
 
 
 def assert_relationship_exists(
@@ -251,9 +251,9 @@ def assert_relationship_exists(
         and r.relation_type == relation_type
     ]
 
-    assert len(matches) > 0, (
-        f"No {relation_type} relationship found from {source_id} to {target_id}"
-    )
+    assert (
+        len(matches) > 0
+    ), f"No {relation_type} relationship found from {source_id} to {target_id}"
 
     return matches[0]
 

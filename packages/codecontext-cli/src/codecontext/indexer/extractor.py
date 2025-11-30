@@ -71,9 +71,9 @@ class Extractor:
         """
         self.parser_factory = parser_factory
         self._init_patterns()
-        self._query_cache: dict[
-            tuple[int, str], QueryCursor | None
-        ] = {}  # Cache for QueryCursor objects
+        self._query_cache: dict[tuple[int, str], QueryCursor | None] = (
+            {}
+        )  # Cache for QueryCursor objects
 
     def _init_patterns(self) -> None:
         """Initialize AST patterns for relationship extraction.
