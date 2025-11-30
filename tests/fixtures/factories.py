@@ -370,41 +370,12 @@ def create_call_graph_scenario(
 
 
 def create_contains_relationship(parent_id, child_id) -> Relationship:
-    """Create a CONTAINS relationship.
-
-    Args:
-        parent_id: ID of parent object
-        child_id: ID of child object
-
-    Returns:
-        CONTAINS relationship with confidence 1.0
-    """
     return RelationshipBuilder().contains(parent_id, child_id).build()
 
 
-def create_references_relationship(source_id, target_id, confidence: float = 0.8) -> Relationship:
-    """Create a REFERENCES relationship (inheritance).
-
-    Args:
-        source_id: ID of source (child) object
-        target_id: ID of target (parent) object
-        confidence: Confidence score (default: 0.8)
-
-    Returns:
-        REFERENCES relationship
-    """
-    return RelationshipBuilder().references(source_id, target_id, confidence).build()
+def create_references_relationship(source_id, target_id) -> Relationship:
+    return RelationshipBuilder().references(source_id, target_id).build()
 
 
-def create_calls_relationship(caller_id, callee_id, confidence: float = 0.6) -> Relationship:
-    """Create a CALLS relationship.
-
-    Args:
-        caller_id: ID of calling function/method
-        callee_id: ID of called function/method
-        confidence: Confidence score (default: 0.6)
-
-    Returns:
-        CALLS relationship
-    """
-    return RelationshipBuilder().calls(caller_id, callee_id, confidence).build()
+def create_calls_relationship(caller_id, callee_id) -> Relationship:
+    return RelationshipBuilder().calls(caller_id, callee_id).build()

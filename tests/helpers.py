@@ -33,16 +33,20 @@ def create_test_relationship(
     source_id: str | None = None,
     target_id: str | None = None,
     relation_type: RelationType = RelationType.CALLS,
-    confidence: float = 0.8,
 ) -> Relationship:
     """Create a test Relationship with default values."""
     return Relationship(
         source_id=str(source_id or uuid4()),
-        source_type="code_object",
+        source_name="test_source",
+        source_type="function",
+        source_file="test.py",
+        source_line=1,
         target_id=str(target_id or uuid4()),
-        target_type="code_object",
+        target_name="test_target",
+        target_type="function",
+        target_file="test.py",
+        target_line=10,
         relation_type=relation_type,
-        confidence=confidence,
     )
 
 

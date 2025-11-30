@@ -143,83 +143,80 @@ class CodeObjectBuilder:
 
 
 class RelationshipBuilder:
-    """Fluent builder for creating test Relationship instances.
-
-    Provides a clean API for creating relationships with sensible defaults:
-    - Automatic ID generation for source/target
-    - Type-specific confidence defaults
-    - Common relationship type shortcuts
-
-    Example:
-        >>> builder = RelationshipBuilder()
-        >>> rel = builder.contains(parent_id, child_id).build()
-        >>> rel = builder.references(source_id, target_id).build()
-    """
+    """Fluent builder for creating test Relationship instances."""
 
     def __init__(self) -> None:
-        """Initialize builder with default values."""
         self._source_id = uuid4()
-        self._source_type = "code_object"
+        self._source_name = "source"
+        self._source_type = "function"
+        self._source_file = "test.py"
+        self._source_line = 1
         self._target_id = uuid4()
-        self._target_type = "code_object"
+        self._target_name = "target"
+        self._target_type = "function"
+        self._target_file = "test.py"
+        self._target_line = 10
         self._relation_type = RelationType.CONTAINS
-        self._confidence = 1.0
 
     def from_source(self, source_id) -> "RelationshipBuilder":
-        """Set the source object ID."""
         self._source_id = source_id
         return self
 
     def to_target(self, target_id) -> "RelationshipBuilder":
-        """Set the target object ID."""
         self._target_id = target_id
         return self
 
     def with_type(self, relation_type: RelationType) -> "RelationshipBuilder":
-        """Set the relationship type."""
         self._relation_type = relation_type
         return self
 
-    def with_confidence(self, confidence: float) -> "RelationshipBuilder":
-        """Set the confidence score."""
-        self._confidence = confidence
+    def with_source_info(
+        self, name: str, obj_type: str, file: str, line: int
+    ) -> "RelationshipBuilder":
+        self._source_name = name
+        self._source_type = obj_type
+        self._source_file = file
+        self._source_line = line
+        return self
+
+    def with_target_info(
+        self, name: str, obj_type: str, file: str, line: int
+    ) -> "RelationshipBuilder":
+        self._target_name = name
+        self._target_type = obj_type
+        self._target_file = file
+        self._target_line = line
         return self
 
     def contains(self, parent_id, child_id) -> "RelationshipBuilder":
-        """Configure as a CONTAINS relationship (parent -> child)."""
         self._source_id = parent_id
         self._target_id = child_id
         self._relation_type = RelationType.CONTAINS
-        self._confidence = 1.0
         return self
 
-    def references(self, source_id, target_id, confidence: float = 0.8) -> "RelationshipBuilder":
-        """Configure as a REFERENCES relationship (inheritance)."""
+    def references(self, source_id, target_id) -> "RelationshipBuilder":
         self._source_id = source_id
         self._target_id = target_id
         self._relation_type = RelationType.REFERENCES
-        self._confidence = confidence
         return self
 
-    def calls(self, caller_id, callee_id, confidence: float = 0.6) -> "RelationshipBuilder":
-        """Configure as a CALLS relationship (function call)."""
+    def calls(self, caller_id, callee_id) -> "RelationshipBuilder":
         self._source_id = caller_id
         self._target_id = callee_id
         self._relation_type = RelationType.CALLS
-        self._confidence = confidence
         return self
 
     def build(self) -> Relationship:
-        """Build the Relationship instance.
-
-        Returns:
-            Fully configured Relationship with all fields set
-        """
         return Relationship(
             source_id=str(self._source_id),
+            source_name=self._source_name,
             source_type=self._source_type,
+            source_file=self._source_file,
+            source_line=self._source_line,
             target_id=str(self._target_id),
+            target_name=self._target_name,
             target_type=self._target_type,
+            target_file=self._target_file,
+            target_line=self._target_line,
             relation_type=self._relation_type,
-            confidence=self._confidence,
         )

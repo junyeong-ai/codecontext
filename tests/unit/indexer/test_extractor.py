@@ -96,9 +96,7 @@ class Dog(Animal):
         extends_rels = [r for r in result.relationships if r.relation_type == RelationType.EXTENDS]
         assert len(extends_rels) == 1
 
-        # Verify the relationship
         rel = extends_rels[0]
-        assert rel.confidence == 1.0
 
         # Find the actual objects
         obj_map = {obj.deterministic_id: obj for obj in result.objects}
@@ -125,12 +123,8 @@ def main():
 
         result = await extractor.extract_from_file("test.py", content=code)
 
-        # Find CALLS relationships
         calls_rels = [r for r in result.relationships if r.relation_type == RelationType.CALLS]
         assert len(calls_rels) >= 1
-
-        # Verify at least one CALLS relationship exists
-        assert all(rel.confidence == 1.0 for rel in calls_rels)
 
     @pytest.mark.asyncio
     async def test_references_relationship(self):
@@ -151,9 +145,7 @@ class Dog:
         # Find REFERENCES relationships
         refs_rels = [r for r in result.relationships if r.relation_type == RelationType.REFERENCES]
 
-        # Should have at least one reference (speak -> bark)
         assert len(refs_rels) >= 1
-        assert all(rel.confidence == 1.0 for rel in refs_rels)
 
     @pytest.mark.asyncio
     async def test_complex_relationships(self):

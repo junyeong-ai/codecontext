@@ -22,7 +22,6 @@ Quick Start:
 # Builders
 # Assertion helpers
 from tests.fixtures.assertions import (
-    assert_all_have_confidence,
     assert_calls_relationship,
     assert_code_object,
     assert_contains_relationship,
@@ -104,7 +103,6 @@ __all__ = [
     "assert_code_object",
     "assert_relationship_count",
     "assert_relationship_exists",
-    "assert_all_have_confidence",
     # Extractor helpers
     "extract_relationships",
     "filter_by_source",
