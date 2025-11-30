@@ -360,58 +360,47 @@ class DocumentNode:
 
 @dataclass
 class Relationship:
-    """Defines connections between code objects and documentation."""
-
-    source_id: str  # Changed from UUID to str (deterministic_id)
+    source_id: str
+    source_name: str
     source_type: str
-    target_id: str  # Changed from UUID to str (deterministic_id)
+    source_file: str
+    source_line: int
+    target_id: str
+    target_name: str
     target_type: str
+    target_file: str
+    target_line: int
     relation_type: RelationType
-    confidence: float
-    id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=_utcnow)
-
-    def generate_deterministic_id(self) -> str:
-        """Generate a deterministic ID based on relationship properties.
-
-        This ensures that the same relationship always gets the same ID,
-        preventing duplicates during re-indexing.
-
-        Returns:
-            Hexadecimal string suitable for use as vector store document ID
-        """
-        unique_str = f"{self.source_id}:{self.target_id}:{self.relation_type.value}"
-        return hashlib.sha256(unique_str.encode()).hexdigest()[:32]
-
-    def validate(self) -> None:
-        """Validate the relationship fields."""
-        if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError("Invalid value")
 
     def to_metadata(self) -> dict[str, Any]:
-        """Convert to vector store metadata format."""
         return {
-            "source_id": self.source_id,  # Already a string (deterministic_id)
+            "source_id": self.source_id,
+            "source_name": self.source_name,
             "source_type": self.source_type,
-            "target_id": self.target_id,  # Already a string (deterministic_id)
+            "source_file": self.source_file,
+            "source_line": self.source_line,
+            "target_id": self.target_id,
+            "target_name": self.target_name,
             "target_type": self.target_type,
+            "target_file": self.target_file,
+            "target_line": self.target_line,
             "relation_type": self.relation_type.value,
-            "confidence": self.confidence,
-            "created_at": self.created_at.isoformat(),
         }
 
     @classmethod
     def from_metadata(cls, metadata: dict[str, Any]) -> "Relationship":
-        """Reconstruct Relationship from vector storage."""
         return cls(
-            id=UUID(metadata.get("id", str(uuid4()))),
-            source_id=metadata["source_id"],  # Now a string, not UUID
+            source_id=metadata["source_id"],
+            source_name=metadata["source_name"],
             source_type=metadata["source_type"],
-            target_id=metadata["target_id"],  # Now a string, not UUID
+            source_file=metadata["source_file"],
+            source_line=int(metadata["source_line"]),
+            target_id=metadata["target_id"],
+            target_name=metadata["target_name"],
             target_type=metadata["target_type"],
+            target_file=metadata["target_file"],
+            target_line=int(metadata["target_line"]),
             relation_type=RelationType(metadata["relation_type"]),
-            confidence=float(metadata["confidence"]),
-            created_at=datetime.fromisoformat(metadata["created_at"]),
         )
 
 

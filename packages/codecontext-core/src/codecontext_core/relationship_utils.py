@@ -30,9 +30,14 @@ def create_reverse_relationship(rel: Relationship) -> Relationship | None:
 
     return Relationship(
         source_id=rel.target_id,
+        source_name=rel.target_name,
         source_type=rel.target_type,
+        source_file=rel.target_file,
+        source_line=rel.target_line,
         target_id=rel.source_id,
+        target_name=rel.source_name,
         target_type=rel.source_type,
+        target_file=rel.source_file,
+        target_line=rel.source_line,
         relation_type=reverse_type,
-        confidence=rel.confidence,
     )
