@@ -84,6 +84,7 @@ uv tool install --python 3.13 --force \
   --with ./packages/codecontext-core \
   --with ./packages/codecontext-storage-qdrant \
   --with ./packages/codecontext-embeddings-huggingface \
+  --with peft \
   --editable ./packages/codecontext-cli
 
 echo ""
