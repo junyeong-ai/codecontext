@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import AsyncGenerator
 
+import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
@@ -209,9 +210,26 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
                     pooled = self._last_token_pooling(output.last_hidden_state, mask)
 
                 if self.config.normalize_embeddings:
-                    pooled = torch.nn.functional.normalize(pooled, p=2, dim=1)
+                    # Safe normalization: avoid division by zero which causes NaN
+                    norms = pooled.norm(p=2, dim=1, keepdim=True)
+                    # Replace near-zero norms with 1.0 to avoid NaN
+                    norms = torch.where(norms < 1e-12, torch.ones_like(norms), norms)
+                    pooled = pooled / norms
 
-                embeddings.extend(pooled.cpu().numpy().tolist())
+                # Convert to numpy and validate for NaN/Inf
+                batch_embeddings = pooled.cpu().numpy()
+
+                # Replace NaN/Inf with 0.0 to prevent Qdrant API errors
+                if np.any(~np.isfinite(batch_embeddings)):
+                    logger.warning(
+                        f"Found NaN/Inf values in embeddings for batch {i // batch_size}, "
+                        "replacing with 0.0"
+                    )
+                    batch_embeddings = np.nan_to_num(
+                        batch_embeddings, nan=0.0, posinf=0.0, neginf=0.0
+                    )
+
+                embeddings.extend(batch_embeddings.tolist())
 
             del ids, mask, output, pooled, encoded
 
