@@ -17,6 +17,7 @@ from qdrant_client.models import (
     Fusion,
     FusionQuery,
     MatchValue,
+    PointIdsList,
     PointStruct,
     Prefetch,
     ScoredPoint,
@@ -202,12 +203,21 @@ class QdrantProvider(VectorStore):
 
         try:
             rel_by_source: dict[str, list[dict[str, Any]]] = {}
+            rel_by_target: dict[str, list[dict[str, Any]]] = {}
+
             if relationships:
                 for rel in relationships:
+                    rel_data = rel.to_metadata()
                     source_key = str(rel.source_id)
+                    target_key = str(rel.target_id)
+
                     if source_key not in rel_by_source:
                         rel_by_source[source_key] = []
-                    rel_by_source[source_key].append(rel.to_metadata())
+                    rel_by_source[source_key].append(rel_data)
+
+                    if target_key not in rel_by_target:
+                        rel_by_target[target_key] = []
+                    rel_by_target[target_key].append(rel_data)
 
             points = []
             skipped_count = 0
@@ -215,8 +225,6 @@ class QdrantProvider(VectorStore):
                 if not obj.embedding:
                     continue
 
-                # Validate embedding: skip objects with NaN/Inf values
-                # (causes Qdrant VectorStruct parsing error)
                 embedding_array = np.array(obj.embedding)
                 if not np.all(np.isfinite(embedding_array)):
                     logger.warning(
@@ -231,7 +239,9 @@ class QdrantProvider(VectorStore):
 
                 obj_id = obj.deterministic_id
                 if obj_id in rel_by_source:
-                    payload["relationships"] = rel_by_source[obj_id]
+                    payload["outgoing_relationships"] = rel_by_source[obj_id]
+                if obj_id in rel_by_target:
+                    payload["incoming_relationships"] = rel_by_target[obj_id]
 
                 point = PointStruct(
                     id=obj_id,
@@ -671,11 +681,23 @@ class QdrantProvider(VectorStore):
             if not result or not result[0].payload:
                 return []
 
-            rels_data = result[0].payload.get("relationships", [])
-            relationships = [Relationship.from_metadata(r) for r in rels_data]
+            payload = result[0].payload
+            outgoing = payload.get("outgoing_relationships", [])
+            incoming = payload.get("incoming_relationships", [])
 
-            if relation_type:
-                relationships = [r for r in relationships if r.relation_type.value == relation_type]
+            seen: set[tuple[str, str, str]] = set()
+            relationships: list[Relationship] = []
+
+            for rel_data in outgoing + incoming:
+                key = (rel_data["source_id"], rel_data["target_id"], rel_data["relation_type"])
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                if relation_type and rel_data["relation_type"] != relation_type:
+                    continue
+
+                relationships.append(Relationship.from_metadata(rel_data))
 
             return relationships
         except Exception:
@@ -727,7 +749,10 @@ class QdrantProvider(VectorStore):
             raise StorageError("Client not initialized")
 
         try:
-            self.client.delete(collection_name=self.collection_name, points_selector=ids)
+            self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=PointIdsList(points=cast(list[str | int | UUID], ids)),
+            )
             return len(ids)
         except Exception as e:
             raise StorageError(f"Failed to delete: {e}") from e

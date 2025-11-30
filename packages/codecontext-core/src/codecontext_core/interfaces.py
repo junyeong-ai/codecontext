@@ -368,15 +368,17 @@ class VectorStore(ABC):
 
     @abstractmethod
     def get_relationships(self, source_id: str, relation_type: Optional[str] = None) -> list[Any]:
-        """
-        Get relationships for a source entity.
+        """Get all relationships for an entity (both incoming and outgoing).
+
+        Returns relationships where the entity is either source or target,
+        enabling bidirectional traversal (e.g., finding both callers and callees).
 
         Args:
-            source_id: Source entity deterministic ID (32-char hex string)
+            source_id: Entity deterministic ID (32-char hex string)
             relation_type: Optional filter by relation type
 
         Returns:
-            List of relationships
+            List of relationships (both directions, deduplicated)
 
         Raises:
             StorageError: If retrieval fails
