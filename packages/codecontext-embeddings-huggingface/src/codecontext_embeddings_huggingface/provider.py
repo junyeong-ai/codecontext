@@ -179,67 +179,92 @@ class HuggingFaceEmbeddingProvider(EmbeddingProvider):
         embeddings = self._embed_batch([text_with_instruction])
         return embeddings[0]
 
+    def _calculate_dynamic_batch_size(self, max_text_len: int, base_batch_size: int) -> int:
+        """Calculate batch size based on estimated token count (attention is O(n²))."""
+        estimated_tokens = max_text_len // 4
+
+        if estimated_tokens > 16384:
+            return 1
+        elif estimated_tokens > 8192:
+            return min(2, base_batch_size)
+        elif estimated_tokens > 4096:
+            return min(4, base_batch_size)
+        elif estimated_tokens > 2048:
+            return min(8, base_batch_size)
+        elif estimated_tokens > 1024:
+            return min(16, base_batch_size)
+        return base_batch_size
+
     def _embed_batch(self, texts: list[str]) -> list[list[float]]:
         if not self.model or not self.tokenizer or not self.device_strategy:
             raise RuntimeError("Provider not initialized")
 
+        if not texts:
+            return []
+
         device = self.device_strategy.get_device_name()
-        batch_size = self.device_strategy.get_batch_size()
-        embeddings = []
+        base_batch_size = self.device_strategy.get_batch_size()
+        max_len = max(len(t) for t in texts)
+        batch_size = self._calculate_dynamic_batch_size(max_len, base_batch_size)
+
+        embeddings: list[list[float]] = []
 
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
-            encoded = self.tokenizer(
-                batch,
-                padding=True,
-                truncation=True,
-                max_length=self.config.max_length,
-                return_tensors="pt",
-            )
-
-            ids = encoded["input_ids"].to(device)
-            mask = encoded["attention_mask"].to(device)
-
-            with torch.no_grad():
-                if self.config.use_fp16 and device != "cpu":
-                    with torch.autocast(device_type=device, dtype=torch.float16):
-                        output = self.model(input_ids=ids, attention_mask=mask)
-                        pooled = self._last_token_pooling(output.last_hidden_state, mask)
+            try:
+                embeddings.extend(self._embed_single_batch(batch, device))
+            except RuntimeError as e:
+                if "out of memory" in str(e).lower() or "MPS" in str(e):
+                    logger.warning(f"OOM with batch_size={len(batch)}, processing one by one")
+                    gc.collect()
+                    self.device_strategy.cleanup_memory()
+                    for text in batch:
+                        embeddings.extend(self._embed_single_batch([text], device))
                 else:
-                    output = self.model(input_ids=ids, attention_mask=mask)
-                    pooled = self._last_token_pooling(output.last_hidden_state, mask)
-
-                if self.config.normalize_embeddings:
-                    # Safe normalization: avoid division by zero which causes NaN
-                    norms = pooled.norm(p=2, dim=1, keepdim=True)
-                    # Replace near-zero norms with 1.0 to avoid NaN
-                    norms = torch.where(norms < 1e-12, torch.ones_like(norms), norms)
-                    pooled = pooled / norms
-
-                # Convert to numpy and validate for NaN/Inf
-                batch_embeddings = pooled.cpu().numpy()
-
-                # Replace NaN/Inf with 0.0 to prevent Qdrant API errors
-                if np.any(~np.isfinite(batch_embeddings)):
-                    logger.warning(
-                        f"Found NaN/Inf values in embeddings for batch {i // batch_size}, "
-                        "replacing with 0.0"
-                    )
-                    batch_embeddings = np.nan_to_num(
-                        batch_embeddings, nan=0.0, posinf=0.0, neginf=0.0
-                    )
-
-                embeddings.extend(batch_embeddings.tolist())
-
-            del ids, mask, output, pooled, encoded
+                    raise
 
             self._batch_counter += 1
             if self._batch_counter % self._cleanup_interval == 0:
                 gc.collect()
-                if self.device_strategy:
-                    self.device_strategy.cleanup_memory()
+                self.device_strategy.cleanup_memory()
 
         return embeddings
+
+    def _embed_single_batch(self, batch: list[str], device: str) -> list[list[float]]:
+        assert self.tokenizer is not None
+        assert self.model is not None
+
+        encoded = self.tokenizer(
+            batch,
+            padding=True,
+            truncation=True,
+            max_length=self.config.max_length,
+            return_tensors="pt",
+        )
+        ids = encoded["input_ids"].to(device)
+        mask = encoded["attention_mask"].to(device)
+
+        with torch.no_grad():
+            if self.config.use_fp16 and device != "cpu":
+                with torch.autocast(device_type=device, dtype=torch.float16):
+                    output = self.model(input_ids=ids, attention_mask=mask)
+                    pooled = self._last_token_pooling(output.last_hidden_state, mask)
+            else:
+                output = self.model(input_ids=ids, attention_mask=mask)
+                pooled = self._last_token_pooling(output.last_hidden_state, mask)
+
+            if self.config.normalize_embeddings:
+                norms = pooled.norm(p=2, dim=1, keepdim=True)
+                norms = torch.where(norms < 1e-12, torch.ones_like(norms), norms)
+                pooled = pooled / norms
+
+            batch_embeddings = pooled.cpu().numpy()
+            if np.any(~np.isfinite(batch_embeddings)):
+                logger.warning("Found NaN/Inf in embeddings, replacing with 0.0")
+                batch_embeddings = np.nan_to_num(batch_embeddings, nan=0.0, posinf=0.0, neginf=0.0)
+
+        del ids, mask, output, pooled, encoded
+        return batch_embeddings.tolist()
 
     async def embed_stream(
         self,
