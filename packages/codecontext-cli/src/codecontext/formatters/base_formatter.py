@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from codecontext_core.models import Relationship, RelationType, SearchResult
+from codecontext_core.models import RelationType, SearchResult
 
 if TYPE_CHECKING:
     from codecontext_core import VectorStore
@@ -37,98 +37,73 @@ class BaseFormatter(ABC):
 
 
 def extract_relationships(result: SearchResult, storage: "VectorStore | None") -> dict[str, Any]:
-    """Extract callers, callees, contains from Relationships with total counts."""
+    """Extract relationship data (callers, callees, contains, contained_by) from storage."""
+    empty_result: dict[str, Any] = {
+        "callers": {"items": [], "total_count": 0},
+        "callees": {"items": [], "total_count": 0},
+        "contains": {"items": [], "total_count": 0},
+        "contained_by": {"items": [], "total_count": 0},
+        "similar": {"items": [], "total_count": 0},
+    }
+
     if storage is None:
-        return {
-            "callers": {"items": [], "total_count": 0},
-            "callees": {"items": [], "total_count": 0},
-            "contains": {"items": [], "total_count": 0},
-            "similar": {"items": [], "total_count": 0},
-        }
+        return empty_result
 
     result_id = result.chunk_id
     rels = storage.get_relationships(result_id)
 
-    callers = []
-    callees = []
-    contains = []
-
-    # Separate full lists for counting
-    all_callers = []
-    all_callees = []
-    all_contains = []
+    callers: list[dict[str, Any]] = []
+    callees: list[dict[str, Any]] = []
+    contains: list[dict[str, Any]] = []
+    contained_by: list[dict[str, Any]] = []
 
     for rel in rels:
-        if rel.relation_type == RelationType.CALLS and rel.target_id == result_id:
-            caller_item = {
-                "name": rel.source_type,
-                "location": f"{rel.source_id}",
-                "type": "direct_call",
-            }
-            all_callers.append(caller_item)
-            callers.append(caller_item)
+        if rel.relation_type == RelationType.CALLS:
+            if rel.target_id == result_id:
+                callers.append(
+                    {
+                        "name": rel.source_type,
+                        "location": rel.source_id,
+                        "type": "direct_call",
+                    }
+                )
+            elif rel.source_id == result_id:
+                callees.append(
+                    {
+                        "name": rel.target_type,
+                        "location": rel.target_id,
+                        "external": False,
+                    }
+                )
 
-        if rel.relation_type == RelationType.CALLS and rel.source_id == result_id:
-            callee_item = {
-                "name": rel.target_type,
-                "location": f"{rel.target_id}",
-                "external": False,
-            }
-            all_callees.append(callee_item)
-            callees.append(callee_item)
-
-        if rel.relation_type == RelationType.CONTAINS and rel.source_id == result_id:
-            contain_item = {"name": rel.target_type, "location": f"{rel.target_id}"}
-            all_contains.append(contain_item)
-            contains.append(contain_item)
+        elif rel.relation_type == RelationType.CONTAINS:
+            if rel.source_id == result_id:
+                contains.append({"name": rel.target_type, "location": rel.target_id})
+            elif rel.target_id == result_id:
+                contained_by.append({"name": rel.source_type, "location": rel.source_id})
 
     return {
-        "callers": {"items": callers, "total_count": len(all_callers)},
-        "callees": {"items": callees, "total_count": len(all_callees)},
-        "contains": {"items": contains, "total_count": len(all_contains)},
+        "callers": {"items": callers, "total_count": len(callers)},
+        "callees": {"items": callees, "total_count": len(callees)},
+        "contains": {"items": contains, "total_count": len(contains)},
+        "contained_by": {"items": contained_by, "total_count": len(contained_by)},
         "similar": {"items": [], "total_count": 0},
     }
 
 
-def count_recursive_callers(
-    code_object_id: str, relationships: list[Relationship], visited: set[str] | None = None
-) -> int:
-    """Recursively count all callers (transitive closure)."""
-    if visited is None:
-        visited = set[Any]()
-
-    if code_object_id in visited:
-        return 0
-
-    visited.add(code_object_id)
-
-    direct_callers = [
-        r.source_id
-        for r in relationships
-        if r.relation_type == RelationType.CALLS and r.target_id == code_object_id
-    ]
-
-    count = len(direct_callers)
-    for caller_id in direct_callers:
-        count += count_recursive_callers(caller_id, relationships, visited)
-
-    return count
-
-
-def calculate_transitive_impact(
-    result: SearchResult, storage: "VectorStore | None"
-) -> dict[str, Any]:
-    """Calculate transitive impact (total callers via recursive traversal)."""
+def calculate_direct_callers(result: SearchResult, storage: "VectorStore | None") -> dict[str, Any]:
+    """Count direct callers for the given result."""
     if storage is None:
-        return {"recursive_callers": 0}
+        return {"direct_callers": 0}
 
     result_id = result.chunk_id
     rels = storage.get_relationships(result_id)
 
-    # Compute recursive caller count (includes indirect callers)
-    total_callers = count_recursive_callers(result_id, rels)
+    caller_count = sum(
+        1 for r in rels if r.relation_type == RelationType.CALLS and r.target_id == result_id
+    )
 
-    return {"recursive_callers": total_callers}
+    return {"direct_callers": caller_count}
 
 
 def extract_essential_snippet(content: str) -> list[str]:

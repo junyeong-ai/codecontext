@@ -6,7 +6,7 @@ from codecontext_core.models import SearchResult
 
 from codecontext.formatters.base_formatter import (
     BaseFormatter,
-    calculate_transitive_impact,
+    calculate_direct_callers,
     extract_essential_snippet,
     extract_relationships,
 )
@@ -160,11 +160,11 @@ class TextFormatter(BaseFormatter):
 
         # Impact
         if (expand_all or "impact" in expand_fields) and storage:
-            impact = calculate_transitive_impact(result, storage)
-            recursive_callers = impact.get("recursive_callers", 0)
-            if recursive_callers > 0:
+            impact = calculate_direct_callers(result, storage)
+            direct_callers = impact.get("direct_callers", 0)
+            if direct_callers > 0:
                 lines.append("")
-                lines.append(f"   Impact: {recursive_callers} recursive callers")
+                lines.append(f"   Impact: {direct_callers} direct callers")
 
         # Content
         if expand_all or "content" in expand_fields:

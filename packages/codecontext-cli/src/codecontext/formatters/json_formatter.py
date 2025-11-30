@@ -7,7 +7,7 @@ from codecontext_core.models import SearchResult
 
 from codecontext.formatters.base_formatter import (
     BaseFormatter,
-    calculate_transitive_impact,
+    calculate_direct_callers,
     extract_essential_snippet,
     extract_relationships,
 )
@@ -145,8 +145,8 @@ class JSONFormatter(BaseFormatter):
 
         # Add impact
         if (expand_all or "impact" in expand_fields) and storage:
-            impact = calculate_transitive_impact(result, storage)
-            if impact.get("recursive_callers", 0) > 0:
+            impact = calculate_direct_callers(result, storage)
+            if impact.get("direct_callers", 0) > 0:
                 expanded["impact"] = impact
 
         return expanded
