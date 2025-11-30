@@ -210,8 +210,20 @@ class QdrantProvider(VectorStore):
                     rel_by_source[source_key].append(rel.to_metadata())
 
             points = []
+            skipped_count = 0
             for obj in objects:
                 if not obj.embedding:
+                    continue
+
+                # Validate embedding: skip objects with NaN/Inf values
+                # (causes Qdrant VectorStruct parsing error)
+                embedding_array = np.array(obj.embedding)
+                if not np.all(np.isfinite(embedding_array)):
+                    logger.warning(
+                        f"Skipping object {obj.name} ({obj.qualified_name}): "
+                        "embedding contains NaN or Inf values"
+                    )
+                    skipped_count += 1
                     continue
 
                 sparse_vector = self._code_object_to_sparse(obj)
@@ -228,6 +240,9 @@ class QdrantProvider(VectorStore):
                 )
                 points.append(point)
 
+            if skipped_count > 0:
+                logger.warning(f"Skipped {skipped_count} objects due to invalid embeddings")
+
             for i in range(0, len(points), self.upsert_batch_size):
                 batch = points[i : i + self.upsert_batch_size]
                 self.client.upsert(collection_name=self.collection_name, points=batch, wait=True)
@@ -241,8 +256,20 @@ class QdrantProvider(VectorStore):
 
         try:
             points = []
+            skipped_count = 0
             for doc in documents:
                 if not doc.embedding:
+                    continue
+
+                # Validate embedding: skip documents with NaN/Inf values
+                # (causes Qdrant VectorStruct parsing error)
+                embedding_array = np.array(doc.embedding)
+                if not np.all(np.isfinite(embedding_array)):
+                    logger.warning(
+                        f"Skipping document {doc.title or doc.relative_path}: "
+                        "embedding contains NaN or Inf values"
+                    )
+                    skipped_count += 1
                     continue
 
                 sparse_vector = self._document_to_sparse(doc)
@@ -255,11 +282,14 @@ class QdrantProvider(VectorStore):
                 )
                 points.append(point)
 
+            if skipped_count > 0:
+                logger.warning(f"Skipped {skipped_count} documents due to invalid embeddings")
+
             for i in range(0, len(points), self.upsert_batch_size):
                 batch = points[i : i + self.upsert_batch_size]
                 self.client.upsert(collection_name=self.collection_name, points=batch)
 
-            logger.debug(f"Added {len(documents)} documents")
+            logger.debug(f"Added {len(points)} documents (skipped {skipped_count})")
 
         except Exception as e:
             raise StorageError(f"Failed to add documents: {e}") from e
