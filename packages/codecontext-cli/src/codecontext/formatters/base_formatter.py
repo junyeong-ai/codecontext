@@ -9,6 +9,11 @@ if TYPE_CHECKING:
     from codecontext_core import VectorStore
 
 
+def _normalize_id(id_str: str) -> str:
+    """Normalize ID by removing dashes (UUID format to hex string)."""
+    return id_str.replace("-", "")
+
+
 def _add_rel(output: dict[str, dict[str, Any]], key: str, name: str, location: str) -> None:
     """Add a relationship item to the output dictionary."""
     if key not in output:
@@ -49,8 +54,8 @@ def extract_relationships(result: SearchResult, storage: "VectorStore | None") -
     if storage is None:
         return {}
 
-    result_id = result.chunk_id
-    rels = storage.get_relationships(result_id)
+    result_id = _normalize_id(result.chunk_id)
+    rels = storage.get_relationships(result.chunk_id)
     if not rels:
         return {}
 
@@ -58,8 +63,8 @@ def extract_relationships(result: SearchResult, storage: "VectorStore | None") -
 
     for rel in rels:
         rel_type = rel.relation_type
-        is_source = rel.source_id == result_id
-        is_target = rel.target_id == result_id
+        is_source = _normalize_id(rel.source_id) == result_id
+        is_target = _normalize_id(rel.target_id) == result_id
 
         if rel_type == RelationType.CALLS:
             if is_target:
@@ -105,11 +110,13 @@ def calculate_direct_callers(result: SearchResult, storage: "VectorStore | None"
     if storage is None:
         return {"direct_callers": 0}
 
-    result_id = result.chunk_id
-    rels = storage.get_relationships(result_id)
+    result_id = _normalize_id(result.chunk_id)
+    rels = storage.get_relationships(result.chunk_id)
 
     caller_count = sum(
-        1 for r in rels if r.relation_type == RelationType.CALLS and r.target_id == result_id
+        1
+        for r in rels
+        if r.relation_type == RelationType.CALLS and _normalize_id(r.target_id) == result_id
     )
 
     return {"direct_callers": caller_count}
