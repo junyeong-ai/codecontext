@@ -284,26 +284,33 @@ class ObjectType(str, Enum):
 
 ### Relationship
 
-**Location**: [packages/codecontext-core/src/codecontext_core/models.py](../../packages/codecontext-core/src/codecontext_core/models.py)
+**Location**: [packages/codecontext-core/src/codecontext_core/models/core.py](../../packages/codecontext-core/src/codecontext_core/models/core.py)
 
 ```python
 @dataclass
 class Relationship:
-    """Represents a relationship between code objects."""
-
-    id: str                      # Unique identifier
-    source_id: str               # Source object ID
-    target_id: str               # Target object ID
-    relation_type: RelationType  # CALLS, CONTAINS, REFERENCES
-    metadata: dict               # Additional context
+    source_id: str        # Source CodeObject deterministic_id
+    source_name: str      # Display name (e.g., "calculate_tax")
+    source_type: str      # Object type (e.g., "function")
+    source_file: str      # File path (e.g., "src/billing.py")
+    source_line: int      # Line number
+    target_id: str
+    target_name: str
+    target_type: str
+    target_file: str
+    target_line: int
+    relation_type: RelationType
 ```
 
-**RelationType Enum**:
+**RelationType Enum** (12 types, 6 bidirectional pairs):
 ```python
 class RelationType(str, Enum):
-    CALLS = "calls"              # Function/method invocation
-    CONTAINS = "contains"        # Hierarchical containment
-    REFERENCES = "references"    # Inheritance/interface implementation
+    CALLS = "calls"                    CALLED_BY = "called_by"
+    EXTENDS = "extends"                EXTENDED_BY = "extended_by"
+    IMPLEMENTS = "implements"          IMPLEMENTED_BY = "implemented_by"
+    REFERENCES = "references"          REFERENCED_BY = "referenced_by"
+    CONTAINS = "contains"              CONTAINED_BY = "contained_by"
+    IMPORTS = "imports"                IMPORTED_BY = "imported_by"
 ```
 
 ---

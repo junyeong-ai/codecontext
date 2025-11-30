@@ -1,190 +1,101 @@
-# CodeContext - AI-Powered Code Search Engine
+# CodeContext
 
 <div align="center">
 
 [![Python](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.5.0-orange.svg)](https://github.com/junyeong-ai/codecontext/releases)
-[![Tests](https://github.com/junyeong-ai/codecontext/actions/workflows/test.yml/badge.svg)](https://github.com/junyeong-ai/codecontext/actions/workflows/test.yml)
-[![Lint](https://github.com/junyeong-ai/codecontext/actions/workflows/lint.yml/badge.svg)](https://github.com/junyeong-ai/codecontext/actions/workflows/lint.yml)
-[![codecov](https://codecov.io/gh/junyeong-ai/codecontext/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/junyeong-ai/codecontext)
 
 🌐 **English** | [한국어](README.md)
 
 </div>
 
-> **Hybrid Search (70% Semantic + 30% Keyword) + Tree-sitter AST Parsing + Vector Embeddings**
+> **"Where is this feature?" "What will this change affect?"** — Get instant answers in large codebases.
 
-Get instant answers to questions like **"Where is this feature?"** and **"What will this change affect?"** in large codebases.
+**Hybrid Search** (70% Semantic + 30% Keyword) | **AST Parsing** | **Relationship Graph**
 
 ---
 
-## Quick Start (3 Steps)
-
-### 1. Install
+## Getting Started
 
 ```bash
-# Start Qdrant server
+# 1. Start Qdrant
 docker compose -f docker-compose.qdrant.yml up -d
 
-# Install CodeContext
+# 2. Install
 ./scripts/install.sh
-```
 
-### 2. Index
-
-```bash
+# 3. Index & Search
 cd your-project
 codecontext index
+codecontext search "user authentication"
 ```
-
-### 3. Search
-
-```bash
-codecontext search "user authentication logic"
-```
-
-**Results**:
-```
-1. AuthService.authenticate (score: 0.94)
-   Type: method | Language: python | Lines: 45-89
-   File: src/services/auth_service.py
-
-2. login_required decorator (score: 0.87)
-   Type: function | Language: python | Lines: 12-23
-   File: src/middleware/auth.py
-```
-
----
-
-## Core Features
-
-### 🎯 Architecture-First Search
-
-- **Class Priority**: Implementation (Class) ranks higher than Interface for better architecture understanding
-- **LOC-Based Complexity**: Large components rank higher than small helpers
-- **Graph Expansion**: Auto-expand related symbols (call relationships, inheritance, etc.)
-
-### ⚡ Hybrid Search
-
-- **70% Semantic Matching**: Instruction-based embeddings (Jina Code Embeddings)
-- **30% Keyword Matching**: BM25F sparse vector (camelCase/snake_case splitting)
-- **RRF Fusion**: Reciprocal Rank Fusion combines results
-
-### 🧬 LoRA Fine-Tuning Support
-
-- **Domain-Specific Embeddings**: Optimize for specific code domains with LoRA adapters
-- **Zero-Config Integration**: Just set the adapter path and it works automatically
-- **Graceful Degradation**: Works with base model if PEFT library unavailable
-
-### 🌐 Multi-Language Support
-
-Python, Kotlin, Java, JavaScript, TypeScript, Markdown
-
-### 🔍 Relationship-Based Search
-
-12 relationship types (6 bidirectional pairs):
-- CALLS/CALLED_BY, EXTENDS/EXTENDED_BY, IMPLEMENTS/IMPLEMENTED_BY
-- REFERENCES/REFERENCED_BY, CONTAINS/CONTAINED_BY, IMPORTS/IMPORTED_BY
 
 ---
 
 ## Why CodeContext?
 
-**High Accuracy**: Keyword noise reduction + semantic understanding + relationship-based expansion minimize false positives
+| Problem | CodeContext Solution |
+|---------|---------------------|
+| grep doesn't understand meaning | Semantic search + keyword matching |
+| IDE search misses relationships | 12 code relationship types (calls, inheritance, references, etc.) |
+| Getting lost in large codebases | Architecture-first search (implementation > interface) |
 
-**Large-Scale Scalability**: Verified on 6000+ file projects, incremental indexing 10-100x faster updates
+**Performance**: Search <500ms | Verified on 6000+ file projects | Incremental indexing
 
-**Full Customization**: Type/field weights, search algorithms, and LoRA fine-tuning tailored to your project
+---
 
-**Performance**: Search <500ms | Indexing ~1000 files/min | Memory <2GB
+## Core Features
+
+### Hybrid Search
+```bash
+codecontext search "payment processing"
+```
+- **70% Semantic**: "payment processing" → finds PaymentService, checkout, billing
+- **30% Keyword**: Exact function/class name matching
+
+### Relationship Exploration
+```bash
+codecontext search "authenticate" --expand relationships --format json
+```
+```json
+{
+  "callers": [{"name": "login", "type": "method", "file": "src/auth.py", "line": 42}],
+  "callees": [{"name": "validate_token", "type": "function", "file": "src/token.py", "line": 15}]
+}
+```
+
+### Supported Languages
+Python, Java, Kotlin, TypeScript, JavaScript, Markdown
+
+---
+
+## Configuration
+
+`.codecontext.toml` (optional):
+
+```toml
+[storage.qdrant]
+url = "http://localhost:6333"
+
+[embeddings.huggingface]
+device = "cpu"  # cuda, mps
+```
 
 ---
 
 ## Requirements
 
 - Python 3.13+
-- Docker (for Qdrant)
-- UV (auto-installed)
+- Docker (Qdrant)
 
 ---
 
-## Configuration
+## Links
 
-Create `.codecontext.toml` in project root (optional, works with defaults):
-
-```toml
-[storage.qdrant]
-url = "http://localhost:6333"  # Docker Qdrant
-
-[embeddings.huggingface]
-device = "cpu"  # or "cuda", "mps"
-# lora_adapter_path = "~/.codecontext/adapters/my-domain"  # Optional
-```
-
-Advanced settings (type weights, field weights, search algorithms): [scripts/README.md](scripts/README.md)
-
----
-
-## Usage Examples
-
-### Natural Language Search
-```bash
-codecontext search "payment gateway integration"
-```
-
-### Code Search
-```bash
-codecontext search "class UserService"
-```
-
-### Expanded Information
-```bash
-codecontext search "order processing" --expand relationships
-```
-
-### LoRA Fine-Tuning Usage
-```bash
-# 1. Prepare LoRA adapter (adapter_config.json + adapter_model.safetensors)
-# 2. Add path to config file
-codecontext index  # Uses fine-tuned embeddings
-codecontext search "domain-specific query"
-```
-
-For details, see [scripts/README.md](scripts/README.md#lora-fine-tuning-support).
-
----
-
-## Architecture
-
-**Module Structure**: CLI + Core + Pluggable Providers (Storage, Embeddings)
-
-**Search Pipeline (5 Stages)**: Query Embedding → Hybrid Search (70%:30%) → Graph Expansion → Boosting+Weight → Diversity
-
-Detailed design: [docs/architecture.md](docs/architecture.md) | [docs/hybrid-search.md](docs/hybrid-search.md)
-
----
-
-## Development
-
-```bash
-./scripts/dev-install.sh  # Setup development environment
-pytest                     # Run tests
-```
-
-Development guide: [CLAUDE.md](CLAUDE.md) (AI Agent) | [docs/](docs/) (Architecture)
-
----
-
-## License
-
-MIT License - See [LICENSE](LICENSE)
-
----
-
-## Contributing
-
-Contributions are always welcome! Please open an Issue or Pull Request.
+- [Architecture](docs/architecture.md)
+- [Development Guide](CLAUDE.md)
+- [License](LICENSE) (MIT)
 
 ---
 
