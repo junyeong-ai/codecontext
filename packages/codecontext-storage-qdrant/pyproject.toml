@@ -13,7 +13,7 @@ authors = [{name = "CodeContext Team", email = "team@codecontext.dev"}]
 
 dependencies = [
     "codecontext-core",
-    "qdrant-client>=1.15.1,<2.0.0",
+    "qdrant-client>=1.16.1,<2.0.0",
 ]
 
 [project.entry-points."codecontext.storage"]

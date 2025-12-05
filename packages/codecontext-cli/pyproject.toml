@@ -19,7 +19,7 @@ dependencies = [
     "codecontext-storage-qdrant",
     "typer>=0.20.0,<1.0.0",
     "tree-sitter>=0.25.2,<1.0.0",
-    "tree-sitter-language-pack>=0.11.0,<1.0.0",
+    "tree-sitter-language-pack>=0.13.0,<1.0.0",
     "gitpython>=3.1.45,<4.0.0",
     "rich>=14.2.0,<15.0.0",
     "toml>=0.10.2,<1.0.0",

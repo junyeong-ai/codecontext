@@ -27,11 +27,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=9.0.0,<10.0.0",
+    "pytest>=9.0.1,<10.0.0",
     "pytest-cov>=7.0.0,<8.0.0",
     "black>=24.0.0",
-    "ruff>=0.14.0",
-    "mypy>=1.18.0,<2.0.0",
+    "ruff>=0.14.8",
+    "mypy>=1.19.0,<2.0.0",
 ]
 
 [tool.setuptools.packages.find]
