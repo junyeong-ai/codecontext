@@ -72,8 +72,13 @@ def test_related_code_populated(sample_document_result):
     assert result["related_code"][0]["match_reason"] == "backtick reference"
 
 
-def test_related_sections_populated(sample_document_result):
-    """Test that related_sections field exists."""
+def test_document_result_structure(sample_document_result):
+    """Test that document result has expected structure without related_sections.
+
+    Note: related_sections is not included for document results because it was
+    designed to find related documents for CODE results using code object embeddings.
+    Documents already have related_code for code references.
+    """
     results = [sample_document_result]
 
     formatter = DocumentFormatter()
@@ -81,8 +86,9 @@ def test_related_sections_populated(sample_document_result):
     response = json.loads(output)
 
     result = response["results"][0]
-    assert "related_sections" in result
-    assert isinstance(result["related_sections"], list)
+    # Documents have related_code but not related_sections
+    assert "related_code" in result
+    assert "related_sections" not in result
 
 
 def test_document_response_schema_valid(sample_document_result):

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from codecontext_core.models import SearchResult
 
-from codecontext.formatters.base_formatter import BaseFormatter, find_related_sections
+from codecontext.formatters.base_formatter import BaseFormatter
 
 if TYPE_CHECKING:
     from codecontext_core import VectorStore
@@ -35,8 +35,6 @@ class DocumentFormatter(BaseFormatter):
                 for ref in related_code_refs
             ]
 
-            related_sections = find_related_sections(result, storage) if storage else []
-
             formatted_result = {
                 "id": str(result.result_id),
                 "score": result.score,
@@ -55,7 +53,6 @@ class DocumentFormatter(BaseFormatter):
                     "language": "markdown",
                 },
                 "related_code": related_code,
-                "related_sections": related_sections,
                 "snippet": {
                     "preview": (result.content or "").split("\n")[:5] if result.content else [],
                     "full": None,

@@ -321,6 +321,13 @@ class QdrantProvider(VectorStore):
             start_time = time.time()
             sparse_vector = self._encode_sparse(query_text)
 
+            # Detect if file_filter is a directory path (needs prefix matching)
+            is_directory_filter = False
+            if file_filter:
+                # Directory if: no extension, or ends with /
+                has_extension = "." in file_filter.split("/")[-1]
+                is_directory_filter = not has_extension or file_filter.endswith("/")
+
             filter_conditions = []
             if type_filter:
                 filter_conditions.append(
@@ -330,15 +337,18 @@ class QdrantProvider(VectorStore):
                 filter_conditions.append(
                     FieldCondition(key="language", match=MatchValue(value=language_filter))
                 )
-            if file_filter:
+            # Only use exact match for file paths, not directories
+            if file_filter and not is_directory_filter:
                 filter_conditions.append(
                     FieldCondition(key="file_path", match=MatchValue(value=file_filter))
                 )
 
             query_filter = Filter(must=cast(Any, filter_conditions)) if filter_conditions else None
 
-            dense_prefetch = int(limit * self.prefetch_ratio_dense)
-            sparse_prefetch = int(limit * self.prefetch_ratio_sparse)
+            # For directory filters, increase limit to compensate for post-filtering
+            effective_limit = limit * 5 if is_directory_filter else limit
+            dense_prefetch = int(effective_limit * self.prefetch_ratio_dense)
+            sparse_prefetch = int(effective_limit * self.prefetch_ratio_sparse)
 
             fusion_type = Fusion.RRF if self.fusion_method == "rrf" else Fusion.DBSF
 
@@ -359,7 +369,7 @@ class QdrantProvider(VectorStore):
                     ),
                 ],
                 query=FusionQuery(fusion=fusion_type),
-                limit=limit,
+                limit=effective_limit,
                 with_vectors=True,
             )
 
@@ -369,7 +379,22 @@ class QdrantProvider(VectorStore):
                     f"Hybrid search ({fusion_type.value}): {elapsed:.3f}s, dense_prefetch={dense_prefetch}, sparse_prefetch={sparse_prefetch}"
                 )
 
-            return list(results.points)
+            points = list(results.points)
+
+            # Post-filter for directory prefix matching
+            if is_directory_filter and file_filter:
+                prefix = file_filter.rstrip("/") + "/"
+                points = [
+                    p
+                    for p in points
+                    if p.payload
+                    and (
+                        str(p.payload.get("file_path", "")).startswith(prefix)
+                        or str(p.payload.get("file_path", "")) == file_filter.rstrip("/")
+                    )
+                ]
+
+            return points[:limit]
 
         except Exception as e:
             raise StorageError(f"Hybrid search failed: {e}") from e
