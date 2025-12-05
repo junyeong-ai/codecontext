@@ -1,16 +1,30 @@
 # Usage Patterns
 
+## Multi-Project Search
+
+```bash
+# List available projects
+codecontext list-projects
+
+# Search in specific project (by name or ID)
+codecontext search "payment" -p myproject -f json
+codecontext search "payment" -p ba0cb3ea504a4430 -f json
+
+# Check project status
+codecontext status -p myproject
+```
+
 ## Progressive Discovery (Token-Efficient)
 
 ```bash
 # 1. Locate candidates
-codecontext search "payment" --format json --limit 20
+codecontext search "payment" -f json -n 20
 
 # 2. Analyze specific result
-codecontext search "PaymentService" --format json --expand relationships
+codecontext search "PaymentService" -f json -e relationships
 
 # 3. Deep dive if needed
-codecontext search "process_payment" --format json --expand all
+codecontext search "process_payment" -f json -e all
 ```
 
 ## Common Tasks

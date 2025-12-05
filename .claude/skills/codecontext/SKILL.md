@@ -16,6 +16,7 @@ codecontext search "<query>" [options]
 
 | Option | Description |
 |--------|-------------|
+| `-p <project>` | Project name or collection ID (auto-detected if omitted) |
 | `-f json` | JSON output |
 | `-n <1-100>` | Result limit (default: 10) |
 | `-l <lang>` | Filter: python, kotlin, java, typescript, javascript |
@@ -55,10 +56,11 @@ codecontext search "validation" -f json --file src/services
 ## Index Management
 
 ```bash
-codecontext status              # Check index status
-codecontext index               # Full index
-codecontext index -i            # Incremental update
-codecontext list-projects       # List indexed projects
+codecontext list-projects              # List all indexed projects
+codecontext status -p <project>        # Check index status (name or ID)
+codecontext index                      # Full index
+codecontext index -i                   # Incremental update
+codecontext delete-project <project>   # Delete project index
 ```
 
 ## Setup
@@ -73,3 +75,5 @@ Or use embedded mode: `codecontext config edit` → set `mode = "embedded"`
 ## Troubleshooting
 
 **"No index found"**: Run `codecontext index` first.
+
+**"Project not found"**: Check project name with `codecontext list-projects`. Use exact name or collection ID.

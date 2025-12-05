@@ -63,6 +63,8 @@ REFERENCES/REFERENCED_BY, CONTAINS/CONTAINED_BY, IMPORTS/IMPORTED_BY
 | Relationship extraction | `indexer/extractor.py` |
 | AST parsing | `parsers/` (per language) |
 | Config | `config/schema.py` |
+| Project registry | `utils/project_registry.py` |
+| CLI context | `utils/cli_context.py` |
 
 ---
 
@@ -101,3 +103,16 @@ max_chunks_per_file: 2
 **Modify search ranking**: `retriever.py` boosting section (117-153)
 
 **Modify formatter output**: `formatters/base_formatter.py` extract_relationships()
+
+**Add CLI error type**: `core/exceptions.py` → handle in command files
+
+---
+
+## Exceptions
+
+| Exception | Use |
+|-----------|-----|
+| `ProjectNotFoundError` | Project name/ID not found (with suggestions) |
+| `EmptyQueryError` | Search query is empty |
+| `SearchError` | Search operation failed |
+| `IndexingError` | Indexing operation failed |
