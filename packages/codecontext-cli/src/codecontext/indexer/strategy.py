@@ -201,6 +201,12 @@ class AsyncIndexStrategy:
 
         await self._store_objects(chunk_objects, chunk_relationships, show_progress)
 
+        # Collect language statistics from actual indexed objects
+        language_counts: dict[str, int] = {}
+        for obj in chunk_objects:
+            lang = obj.language.value if hasattr(obj.language, "value") else str(obj.language)
+            language_counts[lang] = language_counts.get(lang, 0) + 1
+
         stats = ChunkStats(
             chunk_index=chunk_index,
             files_processed=len(chunk_files),
@@ -208,6 +214,7 @@ class AsyncIndexStrategy:
             relationships_count=len(chunk_relationships),
             embeddings_generated=gen,
             embeddings_reused=reused,
+            languages=language_counts,
         )
 
         del chunk_objects, chunk_relationships

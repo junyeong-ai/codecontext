@@ -19,6 +19,7 @@ class ChunkStats:
     relationships_count: int
     embeddings_generated: int
     embeddings_reused: int = 0
+    languages: dict[str, int] | None = None  # {language: count}
 
 
 @dataclass
@@ -29,6 +30,7 @@ class ProcessingStats:
     total_relationships: int = 0
     total_embeddings_generated: int = 0
     total_embeddings_reused: int = 0
+    languages: dict[str, int] | None = None  # {language: count}
 
     def add_chunk(self, chunk_stats: ChunkStats) -> None:
         self.total_files += chunk_stats.files_processed
@@ -36,6 +38,21 @@ class ProcessingStats:
         self.total_relationships += chunk_stats.relationships_count
         self.total_embeddings_generated += chunk_stats.embeddings_generated
         self.total_embeddings_reused += chunk_stats.embeddings_reused
+
+        # Aggregate language counts
+        if chunk_stats.languages:
+            if self.languages is None:
+                self.languages = {}
+            for lang, count in chunk_stats.languages.items():
+                self.languages[lang] = self.languages.get(lang, 0) + count
+
+    def get_languages_list(self) -> list[str]:
+        """Get list of languages with at least one indexed object, sorted by count."""
+        if not self.languages:
+            return []
+        return [
+            lang for lang, count in sorted(self.languages.items(), key=lambda x: -x[1]) if count > 0
+        ]
 
     def to_dict(self) -> dict[str, int]:
         return {

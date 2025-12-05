@@ -88,12 +88,19 @@ class IncrementalIndexStrategy(AsyncIndexStrategy):
         except (ValueError, OSError) as e:
             logger.warning(f"Not a git repository: {e}")
 
+        # Update languages with newly indexed languages
+        # Merge existing languages with new ones
+        existing_languages = set(state.languages) if state.languages else set()
+        new_languages = set(code_stats.get_languages_list())
+        merged_languages = sorted(existing_languages | new_languages)
+
         # Update state
         state.last_commit_hash = current_commit
         state.last_indexed_at = datetime.now(UTC)
         state.total_files = total_changed
         state.total_objects = code_stats.total_objects
         state.total_documents = total_documents
+        state.languages = merged_languages
         state.index_version = "0.3.0"
         state.status = IndexStatus.IDLE
 

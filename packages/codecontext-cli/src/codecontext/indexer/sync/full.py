@@ -67,6 +67,9 @@ class FullIndexStrategy(AsyncIndexStrategy):
 
         abs_repo_path = repository_path.resolve()
 
+        # Use actual indexed languages from code stats (not config)
+        indexed_languages = code_stats.get_languages_list()
+
         state = IndexState(
             project_id=get_project_id(abs_repo_path),
             project_name=abs_repo_path.name,
@@ -76,7 +79,7 @@ class FullIndexStrategy(AsyncIndexStrategy):
             total_files=len(code_files) + len(document_files),
             total_objects=code_stats.total_objects,
             total_documents=total_documents,
-            languages=self.config.indexing.languages,
+            languages=indexed_languages,
             index_version="0.3.0",
             status=IndexStatus.IDLE,
         )
