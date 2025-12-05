@@ -3,11 +3,12 @@
 import logging
 
 import typer
-from codecontext_core.exceptions import CodeContextError
+from codecontext_core.exceptions import CodeContextError, ProjectNotFoundError
 from rich.console import Console
 from rich.panel import Panel
 
 from codecontext.utils.cli_context import initialize_command
+from codecontext.utils.project_registry import get_project_registry
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -55,9 +56,9 @@ def status(
                 raise
 
             if stats.get("content_count", 0) > 0:
-                from codecontext.utils.project import derive_project_name
-
-                display_name = derive_project_name(ctx.project_id)
+                registry = get_project_registry()
+                project_info = registry.get_project(ctx.project_id)
+                display_name = project_info.name if project_info else ctx.project_id
                 console.print(
                     Panel.fit(
                         f"[bold yellow]Indexing in Progress[/bold yellow]\n"
@@ -94,6 +95,7 @@ def status(
 
         # Extract state information
         project_id = state_dict.get("project_id", "Unknown")
+        project_name = state_dict.get("project_name", "")
         repository_path = state_dict.get("repository_path", "Unknown")
         status_value = state_dict.get("status", "unknown")
         last_indexed = state_dict.get("last_indexed_at", "Never")
@@ -121,11 +123,14 @@ def status(
             except (ValueError, AttributeError):
                 pass
 
+        # Display project with name if available
+        project_display = f"{project_name} ({project_id})" if project_name else project_id
+
         # Display status
         console.print(
             Panel.fit(
                 f"[bold blue]CodeContext Index Status[/bold blue]\n"
-                f"Project: {project_id}\n"
+                f"Project: {project_display}\n"
                 f"Repository: {repository_path}\n"
                 f"Status: {status_value}\n"
                 f"Last indexed: {last_indexed}\n"
@@ -147,6 +152,9 @@ def status(
 
         ctx.storage.close()
 
+    except ProjectNotFoundError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(code=1) from None
     except CodeContextError as e:
         console.print(f"[bold red]Error:[/bold red] {e}", style="red")
         raise typer.Exit(code=1) from None

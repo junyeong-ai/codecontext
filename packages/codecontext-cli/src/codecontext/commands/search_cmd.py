@@ -5,7 +5,7 @@ import logging
 from enum import Enum
 
 import typer
-from codecontext_core.exceptions import CodeContextError
+from codecontext_core.exceptions import CodeContextError, EmptyQueryError, ProjectNotFoundError
 from codecontext_core.models import SearchQuery
 from rich.console import Console
 
@@ -93,6 +93,10 @@ def search(
         codecontext search "what are requirements" -i qa -t document  # Documents only
     """
     try:
+        # Validate query before any initialization
+        if not query or not query.strip():
+            raise EmptyQueryError()
+
         enable_logging = verbose
         suppress_ctx = SuppressLoggingContext() if not enable_logging else None
 
@@ -164,6 +168,12 @@ def search(
             print(formatted_output)
             ctx.storage.close()
 
+    except EmptyQueryError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(code=1) from None
+    except ProjectNotFoundError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(code=1) from None
     except CodeContextError as e:
         console.print(f"[bold red]Error:[/bold red] {e}", style="red")
         logger.exception("Search failed")
