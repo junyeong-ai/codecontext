@@ -98,3 +98,44 @@ class InvalidChecksumError(IndexingError):
         self.file_path = file_path
         self.expected = expected
         self.actual = actual
+
+
+class ProjectNotFoundError(CodeContextError):
+    """Raised when a project is not found."""
+
+    def __init__(self, project: str, suggestions: list[tuple[str, str]] | None = None) -> None:
+        """Initialize ProjectNotFoundError.
+
+        Args:
+            project: The project name or ID that was not found
+            suggestions: List of (collection_id, name) tuples for similar projects
+        """
+        self.project = project
+        self.suggestions = suggestions or []
+
+        if self.suggestions:
+            suggestion_lines = [f"  - {name} ({cid})" for cid, name in self.suggestions[:3]]
+            suggestion_text = "\n".join(suggestion_lines)
+            message = (
+                f"Project '{project}' not found.\n\n"
+                f"Did you mean:\n{suggestion_text}\n\n"
+                f"Use 'codecontext list-projects' to see all available projects."
+            )
+        else:
+            message = (
+                f"Project '{project}' not found.\n\n"
+                f"Use 'codecontext list-projects' to see all available projects."
+            )
+
+        super().__init__(message)
+
+
+class EmptyQueryError(SearchError):
+    """Raised when search query is empty."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Search query cannot be empty.\n\n"
+            'Usage: codecontext search "your query"\n'
+            'Example: codecontext search "user authentication"'
+        )
