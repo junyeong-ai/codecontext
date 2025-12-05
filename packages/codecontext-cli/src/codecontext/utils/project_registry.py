@@ -91,7 +91,8 @@ class ProjectRegistry:
                         from codecontext.storage.factory import create_storage_provider
 
                         storage = create_storage_provider(config, collection_id)
-                        storage.set_client(client)
+                        if hasattr(storage, "set_client"):
+                            storage.set_client(client)
                         state = storage.get_index_state()
 
                         if state:
