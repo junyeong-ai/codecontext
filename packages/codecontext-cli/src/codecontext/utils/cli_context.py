@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from codecontext_core.exceptions import ProjectNotFoundError
+
 from codecontext.config.schema import Config
 from codecontext.config.settings import get_settings
 from codecontext.embeddings.factory import create_embedding_provider
@@ -15,6 +17,7 @@ from codecontext.storage.factory import create_storage_provider
 from codecontext.translation import create_translation_provider
 from codecontext.utils.logging import setup_logging
 from codecontext.utils.project import get_project_id, normalize_project_id
+from codecontext.utils.project_registry import get_project_registry
 
 if TYPE_CHECKING:
     from codecontext_core import VectorStore
@@ -107,13 +110,25 @@ def initialize_command(
 
     # Detect or use provided project ID
     if project:
-        project_id = project
+        # Try to resolve project name to collection ID
+        registry = get_project_registry()
+        resolved_id = registry.resolve_project_id(project)
+
+        if resolved_id:
+            project_id = resolved_id
+        else:
+            # Project not found - check for similar projects
+            similar = registry.find_similar_projects(project)
+            if similar:
+                suggestions = [(p.collection_id, p.name) for p in similar[:3]]
+                raise ProjectNotFoundError(project, suggestions)
+            else:
+                raise ProjectNotFoundError(project)
     else:
         detect_path = path if path is not None else Path.cwd()
         project_id = get_project_id(detect_path)
-
-    # Normalize project ID
-    project_id = normalize_project_id(project_id)
+        # Normalize project ID for new projects
+        project_id = normalize_project_id(project_id)
 
     # Create embedding provider if needed
     embedding_provider = None

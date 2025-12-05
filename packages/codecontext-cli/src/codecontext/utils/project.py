@@ -59,14 +59,3 @@ def normalize_project_id(project_id: str) -> str:
         normalized = f"{normalized[:50]}-{hash_suffix}"
 
     return normalized or "default-project"
-
-
-def derive_project_name(collection_name: str) -> str:
-    """Derive human-readable project name from collection name.
-
-    For hash-based collection names (16 hex chars), returns the hash.
-    For normalized project names (with hyphens), returns as-is.
-    """
-    if len(collection_name) == 16 and all(c in "0123456789abcdef" for c in collection_name):
-        return f"project-{collection_name[:8]}"
-    return collection_name
