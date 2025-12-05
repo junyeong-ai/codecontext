@@ -205,38 +205,3 @@ def extract_essential_snippet(content: str) -> list[str]:
 
     essential.extend(key_lines[:2])
     return essential[:5]
-
-
-def find_related_sections(
-    result: SearchResult,
-    storage: "VectorStore | None",
-    limit: int = 3,
-) -> list[dict[str, Any]]:
-    if storage is None:
-        return []
-
-    code_object = storage.get_code_object(result.chunk_id)
-    if code_object is None or code_object.embedding is None:
-        return []
-
-    similar_docs = storage.search_documents(
-        query_embedding=code_object.embedding,
-        limit=limit,
-    )
-
-    related_sections = []
-    for doc_result in similar_docs:
-        metadata = doc_result.get("metadata", {})
-        content = doc_result.get("content", "")
-        snippet = content[:200] + "..." if len(content) > 200 else content
-
-        related_sections.append(
-            {
-                "title": metadata.get("title", "Untitled"),
-                "file": metadata.get("file_path", ""),
-                "score": round(doc_result.get("score", 0.0), 3),
-                "snippet": snippet,
-            }
-        )
-
-    return related_sections
